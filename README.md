@@ -58,7 +58,8 @@
 | **对话方向审计** | [history/DIRECTION_AUDIT_2026-11-16.md](history/DIRECTION_AUDIT_2026-11-16.md) | 逐轮核对真实意图、识别范围漂移与留存机制 |
 | **历史原型 V0.1** | [prototype/v0.1/](prototype/v0.1/) | “双生宇宙”单页局部演示，历史资料保留 |
 | **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | 历史 AI 首页草稿，用户反馈信息密集，未通过设计验收 |
-| **交互原型 V0.3** | [prototype/v0.3/index.html](prototype/v0.3/index.html) · [说明](prototype/v0.3/README.md) | 一个 AI 对话入口、简洁展示卡片与渐进披露，已测试部分交互，待用户验收 |
+| **交互原型 V0.3** | [prototype/v0.3/index.html](prototype/v0.3/index.html) · [说明](prototype/v0.3/README.md) | 统一 AI 对话、展示卡片的上一版，用户指出仍有冗余 |
+| **手机抽卡 V0.4** | [prototype/v0.4/index.html](prototype/v0.4/index.html) · [说明](prototype/v0.4/README.md) | 五套手机端 UI 抽卡评选，用户可收藏方案，待用户体验 |
 
 ## 当前优先事项
 
