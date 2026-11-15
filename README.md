@@ -24,6 +24,7 @@
 | 进度与路线 | [planning/PROGRESS.md](planning/PROGRESS.md) | 当前成果、未知、下一步 |
 | 协作规则 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | 三方如何读写、避免信息错乱 |
 | 讨论摘要 | [history/DISCUSSION.md](history/DISCUSSION.md) | 创意演变和关键纠偏 |
+| **V0.1 原型** | [prototype/v0.1/index.html](prototype/v0.1/index.html) · [运行说明](prototype/v0.1/README.md) | 可下载运行的历史 HTML 演示与操作说明 |
 
 ## 当下的两个核心超能力
 
@@ -36,6 +37,6 @@
 
 **先有一份可体验产品草稿和可运行的 V0.1，再根据实际体验修正，不再无休止追问单一功能。**
 
-已有 V0.1 单页 HTML 原型及产品大纲在历史会话交付过，2026-11-16 核对了原型源码的主要结构；本仓库首先建立文档基准。**未在此 README 声称代码已经同步到仓库或已正式部署。**
+已有 V0.1 单页 HTML 原型及产品大纲在历史会话交付过，2026-11-16 已将原始文本文件归档到 [prototype/v0.1/](prototype/v0.1/)。**代码已入库，但未正式部署、未接入真实 AI，也尚未获得用户使用体验验收。**
 
 > 资料可信度约定：✅ 已确认（用户明确决定）｜🧪 已有原型/可检查文件｜💡 探索中｜⏳ 未开发/未验证。严禁把计划写成已经完成。
