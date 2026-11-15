@@ -56,7 +56,8 @@
 | 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT / Codex / DSH 如何处理变更 |
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
 | **对话方向审计** | [history/DIRECTION_AUDIT_2026-11-16.md](history/DIRECTION_AUDIT_2026-11-16.md) | 逐轮核对真实意图、识别范围漂移与留存机制 |
-| **历史原型** | [prototype/v0.1/](prototype/v0.1/) | “双生宇宙”单页演示，不是最终产品架构 |
+| **历史原型 V0.1** | [prototype/v0.1/](prototype/v0.1/) | “双生宇宙”单页局部演示，历史资料保留 |
+| **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | AI 主导首页与功能联动的本地规则演示，已测试但未验收 |
 
 ## 当前优先事项
 
