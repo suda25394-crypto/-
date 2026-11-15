@@ -60,7 +60,6 @@
 | **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | 历史 AI 首页草稿，用户反馈信息密集，未通过设计验收 |
 | **交互原型 V0.3** | [prototype/v0.3/index.html](prototype/v0.3/index.html) · [说明](prototype/v0.3/README.md) | 统一 AI 对话、展示卡片的上一版，用户指出仍有冗余 |
 | **手机抽卡 V0.4** | [prototype/v0.4/index.html](prototype/v0.4/index.html) · [说明](prototype/v0.4/README.md) | 五套手机端 UI 抽卡评选，用户可收藏方案，待用户体验 |
-
 | **V0.5 抽卡探索** | [prototype/v0.5/index.html](prototype/v0.5/index.html) · [说明](prototype/v0.5/README.md) | 五种真正不同的手机交互结构，**用户尚未选定** |
 
 ## 当前优先事项
