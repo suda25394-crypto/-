@@ -57,7 +57,8 @@
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
 | **对话方向审计** | [history/DIRECTION_AUDIT_2026-11-16.md](history/DIRECTION_AUDIT_2026-11-16.md) | 逐轮核对真实意图、识别范围漂移与留存机制 |
 | **历史原型 V0.1** | [prototype/v0.1/](prototype/v0.1/) | “双生宇宙”单页局部演示，历史资料保留 |
-| **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | AI 主导首页与功能联动的本地规则演示，已测试但未验收 |
+| **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | 历史 AI 首页草稿，用户反馈信息密集，未通过设计验收 |
+| **交互原型 V0.3** | [prototype/v0.3/index.html](prototype/v0.3/index.html) · [说明](prototype/v0.3/README.md) | 一个 AI 对话入口、简洁展示卡片与渐进披露，已测试部分交互，待用户验收 |
 
 ## 当前优先事项
 
