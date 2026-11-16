@@ -1,0 +1,74 @@
+name: couple-ai-demo
+services:
+  webui:
+    image: ghcr.io/open-webui/open-webui:v0.13.3-slim@sha256:8faf917243afee55e042b10ddc08ed6ae6fa9c62522c7e14d81e7cf2922325ae
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-4380}:8080"
+    environment:
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in .env}
+      WEBUI_AUTH: "true"
+      WEBUI_URL: ${DEMO_WEBUI_ORIGIN:-http://127.0.0.1:4380}
+      CORS_ALLOW_ORIGIN: ${DEMO_WEBUI_ORIGIN:-http://127.0.0.1:4380}
+      WEBUI_AUTH_COOKIE_SECURE: ${WEBUI_AUTH_COOKIE_SECURE:-true}
+      ENABLE_SIGNUP: "false"
+      ENABLE_ADMIN_CHAT_ACCESS: "false"
+      ENABLE_ADMIN_EXPORT: "false"
+      ENABLE_PERSISTENT_CONFIG: "false"
+      ENABLE_CHANNELS: "true"
+      USER_PERMISSIONS_FEATURES_CHANNELS: "true"
+      USER_PERMISSIONS_CHAT_SHARE: "false"
+      USER_PERMISSIONS_CHAT_FILE_UPLOAD: "false"
+      USER_PERMISSIONS_FEATURES_WEB_SEARCH: "false"
+      ENABLE_API_KEYS: "false"
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URLS: "http://deepseek-gateway:8000/v1"
+      OPENAI_API_KEYS: ${DEMO_GATEWAY_TOKEN:?Set DEMO_GATEWAY_TOKEN in .env}
+      ENABLE_DIRECT_CONNECTIONS: "false"
+      ENABLE_MEMORIES: "false"
+      ENABLE_NOTES: "false"
+      ENABLE_CALENDAR: "false"
+      ENABLE_AUTOMATIONS: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_IMAGE_GENERATION: "false"
+      ENABLE_TITLE_GENERATION: "false"
+      ENABLE_TAGS_GENERATION: "false"
+      ENABLE_FOLLOW_UP_GENERATION: "false"
+      ENABLE_SEARCH_QUERY_GENERATION: "false"
+      ENABLE_RETRIEVAL_QUERY_GENERATION: "false"
+      OFFLINE_MODE: "true"
+      RAG_EMBEDDING_MODEL: ""
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+      DATABASE_POOL_SIZE: "8"
+      DATABASE_SQLITE_PRAGMA_CACHE_SIZE: "-2000"
+      DATABASE_SQLITE_PRAGMA_MMAP_SIZE: "0"
+      UVICORN_WORKERS: "1"
+      GLOBAL_LOG_LEVEL: "WARNING"
+    volumes:
+      - webui-data:/app/backend/data
+    depends_on:
+      deepseek-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+  deepseek-gateway:
+    build: .
+    environment:
+      DEMO_GATEWAY_TOKEN: ${DEMO_GATEWAY_TOKEN:?Set DEMO_GATEWAY_TOKEN in .env}
+      DEEPSEEK_ENABLED: ${DEEPSEEK_ENABLED:-false}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEMO_DAILY_REQUESTS: ${DEMO_DAILY_REQUESTS:-30}
+      DEMO_MAX_OUTPUT_TOKENS: ${DEMO_MAX_OUTPUT_TOKENS:-1024}
+      DEMO_BUDGET_DB: /data/budget.sqlite3
+    volumes:
+      - budget-data:/data
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  webui-data:
+  budget-data:

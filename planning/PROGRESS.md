@@ -127,3 +127,12 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - 实际检查：本机 Git 克隆、远端分支与推送 dry-run；GHCR Slim 双架构 manifest 与固定版本源码；本机无可用容器运行时。
 - 待验证：服务器未获访问入口；DeepSeek 未配置/调用；未部署、未创建真实账号，未做双人验收。
 - 下一步：提交阶段 1 的 Compose、DeepSeek 调用限制、可复现本地测试与实际双人验收步骤。
+
+## 2026-11-16｜阶段 1：Open WebUI 聊天底座本地验证
+
+- **代码**：[部署与验收](../demo/README.md)、[Compose](../demo/compose.yaml)、[DeepSeek 网关](../demo/gateway.py)、[网关回归](../demo/tests/test_gateway.py)、[原生账号与频道验收](../demo/tests/verify_webui.py)。本条所在提交交付阶段 1 本地实现。环境审计提交为 `bbb0a9c`。
+- **部署配置检查**：Open WebUI v0.13.3-slim 镜像索引已从 GHCR 实读并锁定；Compose 文件通过官方 Compose Specification JSON Schema（`3a4a6995e4a971f6173dff9130cb3e38e6738651`）校验。检查了回环监听、网关无映射端口、DeepSeek 密钥不进入 WebUI 容器。Linux 镜像的构建与启动未实测，本机没有容器引擎。
+- **网关**：Python 3.12 下 `uv run --locked --no-sync python -m unittest discover -s tests -p "test_*.py" -v`，8/8 通过。覆盖未配置、越权、输入/输出上限、并发原子计数、重启后保持限额、换日、数据库失败、上游 HTTP/超时和完整/中断 SSE。真实回环 HTTP 的禁用态返回 503。锁文件检查和 Python 编译通过，`pip-audit 2.10.1` 对网关锁定依赖的检查未报告已知漏洞。
+- **原生 Open WebUI 本机端到端**：安装官方 0.13.3 wheel 与同版本 Slim 依赖，启用 Slim 运行模式，用独立临时数据库。两个普通用户模型权限独立授予，第三账号无模型权限；私聊双向隔离，通过 WebUI 管理员接口也不能按 ID 读普通用户私聊。两位成员互见消息，第三账号无法列出、读取或发消息。Open WebUI 的真实 `@AI` 响应链路经离线测试传输验证，两位成员看到同一线程回复。
+- **浏览器与资源取样**：Playwright 1.65.2、Chrome 157.0.8103.79，两套隔离的 390×844 会话均实际登录并渲染共同频道。Windows 原生 WebUI 进程 working set 328 MiB，峰值 334 MiB；Linux 容器和真实模型负载的资源峰值待查。原生测试日志位于本机 `%TEMP%/couple-demo-upstream-v0133/smoke-0ff8279c10/`，三个日志文件分别为 `open-webui.log`、`gateway-disabled.log`、`gateway-fixture.log`。
+- **现场验收待做**：阿里云 SSH 和实际 OS/端口/已有服务核验、Linux Compose 运行、DeepSeek 密钥和计费授权、真实模型用量、两部手机连接及用户验收。当前只有本地合成账号，待获授权后按部署说明验证真实聊天，再进入阶段 2 档案和阶段 3 联动。
