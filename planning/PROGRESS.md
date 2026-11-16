@@ -149,3 +149,9 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - Docker 客户端与服务端均为 29.9.3，Compose v5.7.1。Docker 正在运行且已启用开机启动。无容器（含已停止容器），Compose 项目列表为空。Tailscale 守护进程正在运行，地址为 `100.127.243.70`，Serve 配置为空。无 TCP 80、443、4380 监听。系统主要服务含 Docker、containerd、SSH、Tailscale、阿里云助手及安全代理。`dsh-web.service` 显示 failed，且当前找不到 unit 文件。
 - `couple-deploy` 确在 Docker 组，能直接管理 Docker，权限等效 root。`sudo -n` 提示需要密码，本次已核实监听端口，进程归属未核实。
 - 无凭据 HTTPS 探测中，GHCR、PyPI、Python 文件下载域和 DeepSeek 入口均返回 HTTP 响应，Docker Hub registry 直连出现连接超时。未拉取镜像或调用模型。该审计未变更服务器配置和服务，部署仍待明确授权。
+
+## 2026-11-17｜手机 PWA 方案与本地验证
+
+- [PWA 实施方案](MOBILE_PWA_PLAN.md)复用 Open WebUI v0.13.3-slim 的安装、私聊和共享频道。建议首轮使用原生手机界面，待实测再决定是否增加一屏入口。
+- Chromium 回环实例的默认与自定义 manifest 均通过安装条件诊断；另验证启动资源路径和 iOS 独立图标。360×800、390×844 的私聊和频道横向溢出为 0 px；两套触控会话复跑 `@AI` 与离线夹具同线程回复通过。
+- 公网 HTTPS 与两部手机实际安装待授权及现场验证。此次只提交方案和测试记录，服务器网络、部署配置与聊天底座均未改动。旧记录中的 Tailnet 地址仅用于私网验证。
