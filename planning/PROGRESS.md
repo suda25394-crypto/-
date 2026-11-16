@@ -145,3 +145,12 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **当前唯一发布阻塞**：由 Muse 评估并实施一个两部手机都可从普通互联网访问的公网 HTTPS 入口，同时保留现有私网入口。公网入口须保护登录、关闭公开注册，不直接暴露 WebUI 管理端口。
 - **建议下一步**：先完成公网入口审查与部署，再将同一个 HTTPS 地址分别发给两部手机，按文档安装 PWA 并完成真机验收。若真机体验暴露明显局限，再评估轻量前端；当前不必先开发原生 App。
 - **分支注意**：`codex/mobile-pwa` 与 `main` 当前存在分叉（比较结果：开发分支 ahead 4、behind 7）。本次只将 PWA 方案文档同步至 main，**没有合并整个开发分支**；后续合并代码前需要基于共同祖先审查差异，避免覆盖 main 的新规则和交接记录。
+
+
+## 2026-11-17｜Muse 公网访问评估已归档，尚未实施
+
+- Muse 完成服务器只读检查与方案比较；[评估摘要](PUBLIC_ACCESS_ASSESSMENT_2026-11-17.md)。检查期间没有改服务器配置、安装 cloudflared、开启 Funnel 或开放端口。
+- 实测：Open WebUI 与 DeepSeek Gateway 均运行健康；WebUI 仅回环绑定，Gateway 仅 Docker 内网；Tailscale Serve 仍仅 Tailnet 可访问；Funnel 未开启，cloudflared 未安装；DeepSeek 仍未启用。
+- Muse 推荐 **Cloudflare Tunnel + Cloudflare Access**：提供独立公网入口，并可用邮箱验证码限制访问；需要稳定域名。**Tailscale Funnel 是备选**：免新域名、部署简单，但公网与私网共用同一地址，且没有 Access 前置身份校验。
+- 当前仍是待用户确认的方案选择，不能把评估报告当成部署完成，也不要再次向 Muse 重复发送未结合本报告的新部署指令。
+- 安全待办：交接材料曾暴露 SSH 密码和私钥，应单独安排轮换；尚未执行。WebUI 继续回环绑定、关闭公开注册，不开放 4380 或 SSH 管理入口。
