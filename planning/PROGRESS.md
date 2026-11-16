@@ -120,3 +120,17 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **已选择但尚未部署**：Open WebUI 作为底座，群聊 `@模型` 可接受；用户已有阿里云北京 2核2GB 云服务器。
 - **尚未启动实际服务器施工**：本会话没有访问服务器 SSH、检查服务器 OS、连接 DeepSeek API 或运行 Codex；不能因此提供有依据的完成时长，也不能说 Demo 已经能联机。
 - **阶段下一动作**：用户把 GitHub 的开工文件交给 Codex；Codex 先只读审计环境，缺访问凭据则继续本地代码，不重复问已知资源信息，按阶段回写实测证据。
+
+
+## 2026-11-17｜服务器已部署，进入真实联机验收阶段
+
+**证据来源**：[脱敏服务器交接记录](SERVER_HANDOVER_2026-11-16.md)，依据用户上传的 2026-11-16 21:00（UTC+8）交接文件整理。以下是交接时点报告，不是本轮实时 SSH 复测。
+
+- **已部署并报告 healthy**：Open WebUI 0.13.3-slim、DeepSeek Gateway；Compose 项目位于服务器目录 /home/couple-deploy/app/couple-ai-demo/。
+- **服务器**：阿里云 ECS，Debian 13，x86_64，2 vCPU，约 1.7 GiB RAM，4 GiB swap；Docker 29.9.3，Compose v5.7.1。
+- **网络**：Tailscale Serve 私网 HTTPS 已配置，WebUI 仅绑定 127.0.0.1:4380；当前入口需要设备加入同一 Tailnet，**尚不满足伴侣无需 Tailscale 即可使用的最终体验**。
+- **模型状态**：DEEPSEEK_ENABLED=false，DEEPSEEK_API_KEY 为空；真实 DeepSeek 调用尚未启用。
+- **账号**：交接方报告管理员及两个用户账号已创建；账号凭据是否已安全交付、两台手机是否实际登录，尚未验收。
+- **安全待办**：交接材料包含明文部署账号密码，先前聊天中也出现过 SSH 私钥；交接时 SSH 仍允许密码登录与 root 登录。相关凭据应视为暴露，需由 Muse 规划安全轮换并验证替代登录通道；不得把任何凭据写入 GitHub。尚无证据表明轮换已经完成。
+- **下一步**：Codex 评估 PWA/手机桌面安装体验；Muse 评估无需 Tailscale 的 HTTPS 访问方案（Funnel / Cloudflare Tunnel / 域名等），先审查后实施；随后在用户授权下接入 DeepSeek 并进行双手机真实验收。
+- **状态边界**：服务器服务已部署 ≠ DeepSeek 已接入 ≠ 双人手机验收通过 ≠ AI 功能导演/关系记忆已实现。
