@@ -52,6 +52,7 @@
 | 商业化 | [docs/BUSINESS.md](docs/BUSINESS.md) | 免费/会员与成本假设 |
 | 竞品调查 | [research/COMPETITORS.md](research/COMPETITORS.md) | 海内外产品参考，仍需逐项核验 |
 | 创意储备 | [ideas/BACKLOG.md](ideas/BACKLOG.md) | 未确立需求与未来功能 |
+| **科学题库与个性化画像 V1** | [docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 已核验中文 Mini-IPIP 20题依据，定稿图文画像、确认更新规则，待开发 |
 | **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已实现、未实现、下一步 |
 | 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT / Codex / DSH 如何处理变更 |
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
