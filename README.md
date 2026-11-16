@@ -72,7 +72,8 @@
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
 2. **服务器底座已部署**：Open WebUI 与 DeepSeek Gateway 已运行，Tailscale 私网入口已配置；真实 DeepSeek 尚未启用，两部手机尚待验收。
 3. **[公网入口已开通](planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md)**：免费 Tailscale Funnel 可供未安装 Tailscale 的手机访问；原私网入口仍正常。
-4. **当前真实状态**：公网登录后展示的仍是 Open WebUI 默认界面，不是情侣产品 UI。服务器与账号底座已就绪，但 V0.6 环形 AI 中枢尚未接入线上；真实 DeepSeek 也未启用。
-5. **当前下一步**：由 Codex 基于 `prototype/v0.6/` 开发手机端情侣产品前端 V1，先给用户审核；暂不安装当前默认 WebUI 的 PWA，避免把通用聊天壳误当成情侣 Demo。
+4. **本地情侣前端 V1 已交付**：[运行说明](frontend/README.md) · [实施记录](planning/FRONTEND_V1_IMPLEMENTATION_2026-11-17.md)，位于 `codex/couple-frontend-v1` 分支，尚未合并 main。
+5. **视觉验收未通过**：用户认为当前图形平庸、不够惊艳；详见[视觉评审](planning/FRONTEND_V1_DESIGN_REVIEW_2026-11-17.md)。本地交互可运行不等于 UI 验收通过。
+6. **当前下一步建议**：先做 3 个真正不同的手机端视觉方向样本，用户选定后再扩展整套 UI；暂不部署当前视觉版本，也不接真实模型。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
