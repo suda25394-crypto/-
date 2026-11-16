@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>我们之间 · 视觉评审</title>
+  <link rel="icon" href="data:,"><link rel="stylesheet" href="review.css">
+  <script type="module" src="review.js"></script>
+</head>
+<body>
+<main class="review">
+  <header><h1>手机视觉抽卡</h1><p>三套方案，共用同一组功能和故事。收藏与评分保存在本机。</p></header>
+  <div id="directions" class="directions" aria-label="设计方向"></div>
+  <section class="toolbar" aria-label="评审设置">
+    <div id="pages" class="buttons" aria-label="预览页面"></div>
+    <div class="options">
+      <label>视口 <select id="size"><option value="390">390 × 844</option><option value="360">360 × 800</option></select></label>
+      <button id="favorite" type="button" aria-pressed="false">收藏</button>
+      <label>喜欢程度 <select id="rating"><option value="0">未评分</option><option value="1">1 不喜欢</option><option value="2">2 一般</option><option value="3">3 还可以</option><option value="4">4 喜欢</option><option value="5">5 很喜欢</option></select></label>
+    </div>
+    <div class="options"><button id="compare" type="button" aria-pressed="false">并排比较</button><a id="direct" href="sample.html" target="_blank" rel="noopener">单独打开 ↗</a><a href="README.md">色板与测试 ↗</a></div>
+  </section>
+  <p id="feedback" role="status"></p>
+  <section id="single" class="preview"><iframe id="phone" title="手机设计样本"></iframe></section>
+  <section id="comparisons" hidden aria-label="三案截图比较"></section>
+</main>
+</body>
+</html>
