@@ -55,7 +55,7 @@
 | **科学题库与个性化画像 V1** | [docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 已核验中文 Mini-IPIP 20题依据，定稿图文画像、确认更新规则，待开发 |
 | **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已部署底座、真实验收状态、未实现能力与下一步 |
 | **服务器交接** | [planning/SERVER_HANDOVER_2026-11-16.md](planning/SERVER_HANDOVER_2026-11-16.md) | Open WebUI 与网关已部署；DeepSeek 未启用；Tailscale 私网入口已配置 |
-| **公网访问方案评估** | [planning/PUBLIC_ACCESS_ASSESSMENT_2026-11-17.md](planning/PUBLIC_ACCESS_ASSESSMENT_2026-11-17.md) | Muse 已完成评估；用户已批准免费 Tailscale Funnel 试运行，待 Muse 执行 |
+| **公网访问实施记录** | [planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md](planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md) | Tailscale Funnel 已开通，站外 HTTP 200；真实账号登录与双手机验收待完成 |
 | **手机 PWA 实施方案** | [planning/MOBILE_PWA_PLAN.md](planning/MOBILE_PWA_PLAN.md) | 复用 Open WebUI 原生 PWA；本地验证完成，公网 HTTPS 与真机安装待验收 |
 | 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT 总控、Codex 开发、Muse 运维，以及重要变化主动同步规则 |
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
@@ -71,7 +71,7 @@
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
 2. **服务器底座已部署**：Open WebUI 与 DeepSeek Gateway 已运行，Tailscale 私网入口已配置；真实 DeepSeek 尚未启用，两部手机尚待验收。
-3. **当前唯一执行任务：Muse 按用户批准的 D-37 开通免费 Tailscale Funnel**，保留原私网入口，并用未加入 Tailnet 的普通网络验收。
-4. **随后**：完成两部手机 PWA 真机安装验收，再单独安排真实 DeepSeek 接入与双人使用测试。
+3. **公网入口已开通**：免费 Tailscale Funnel 可供未安装 Tailscale 的手机访问；原私网入口仍正常。
+4. **当前下一步**：双方分别用 Demo A / Demo B 账号完成真实登录；之后安装 PWA 并完成两部手机验收，再安排真实 DeepSeek 接入。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
