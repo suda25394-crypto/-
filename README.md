@@ -71,7 +71,7 @@
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
 2. **服务器底座已部署**：Open WebUI 与 DeepSeek Gateway 已运行，Tailscale 私网入口已配置；真实 DeepSeek 尚未启用，两部手机尚待验收。
-3. **公网入口已开通**：免费 Tailscale Funnel 可供未安装 Tailscale 的手机访问；原私网入口仍正常。
+3. **[公网入口已开通](planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md)**：免费 Tailscale Funnel 可供未安装 Tailscale 的手机访问；原私网入口仍正常。
 4. **当前下一步**：双方分别用 Demo A / Demo B 账号完成真实登录；之后安装 PWA 并完成两部手机验收，再安排真实 DeepSeek 接入。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
