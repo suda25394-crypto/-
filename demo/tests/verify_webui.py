@@ -30,14 +30,17 @@ def login(client, user):
     return signed_in["id"]
 
 
-def verify_browsers(origin, browser_executable, identities, channel_id):
-    from playwright.sync_api import sync_playwright
+def verify_browsers(origin, browser_executable, identities, channel_id, fixture_reply):
+    from playwright.sync_api import expect, sync_playwright
 
     with sync_playwright() as browser_tools:
         browser = browser_tools.chromium.launch(executable_path=browser_executable, headless=True)
+        pages = []
         try:
             for user in identities:
-                page = browser.new_context(viewport={"width": 390, "height": 844}, locale="en-US").new_page()
+                page = browser.new_context(
+                    viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="en-US"
+                ).new_page()
                 page.goto(f"{origin}/auth", wait_until="domcontentloaded")
                 page.locator('input[inputmode="email"]').fill(user["email"])
                 page.locator('input[type="password"]').fill(user["password"])
@@ -46,9 +49,37 @@ def verify_browsers(origin, browser_executable, identities, channel_id):
                 page.goto(f"{origin}/channels/{channel_id}", wait_until="domcontentloaded")
                 page.get_by_text("shared-message-a", exact=True).wait_for()
                 page.get_by_text("shared-message-b", exact=True).wait_for()
+                pages.append(page)
+            print("PASS: two isolated mobile browser sessions signed in and rendered the same channel")
+
+            if fixture_reply is None:
+                return None
+
+            sender, partner = pages
+            composer = sender.locator("#chat-input")
+            composer.tap()
+            sender.keyboard.type("@AI")
+            sender.locator(".mention-list button").filter(has_text="AI").tap()
+            prompt = "请确认两人都能看到这条群聊消息。"
+            sender.keyboard.insert_text(prompt)
+            post_url = f"{origin}{CHANNELS}/{channel_id}/messages/post"
+            with sender.expect_response(
+                lambda response: response.url == post_url and response.request.method == "POST"
+            ) as result:
+                sender.get_by_role("button", name="Send message", exact=True).tap()
+            response = result.value
+            require(response.ok, f"Mobile composer send failed with status {response.status}")
+            posted = response.json()
+            require(MENTION in posted["content"], "The mobile composer did not serialize the AI mention")
+
+            for page in (partner, sender):
+                expect(page.get_by_text(prompt)).to_be_visible(timeout=15_000)
+                page.get_by_role("button", name="1 Replies").tap(timeout=20_000)
+                expect(page.get_by_text(fixture_reply, exact=True)).to_be_visible(timeout=15_000)
+            print("PASS: tapped @AI and sent in one mobile session, then both opened the reply without refreshing")
+            return posted["id"]
         finally:
             browser.close()
-    print("PASS: two isolated mobile-size browser sessions signed in and rendered the same channel")
 
 
 def verify(origin, fixture_reply=None, browser_executable=None):
@@ -115,9 +146,15 @@ def verify(origin, fixture_reply=None, browser_executable=None):
                 "Nonmember could post to channel")
         print("PASS: Group Channel shared by A/B; third account denied list/read/post")
 
+        post_id = None
+        if browser_executable:
+            post_id = verify_browsers(origin, browser_executable, identities[:2], channel["id"], fixture_reply)
+
         if fixture_reply:
-            post = ok(a.post(f"{path}/messages/post", json={"content": f"{MENTION} 验证模型链路"}))
-            thread = f"{path}/messages/{post['id']}/thread"
+            if post_id is None:
+                post = ok(a.post(f"{path}/messages/post", json={"content": f"{MENTION} 验证模型链路"}))
+                post_id = post["id"]
+            thread = f"{path}/messages/{post_id}/thread"
             deadline = time.monotonic() + 20
             for client in (b, a):
                 while time.monotonic() < deadline:
@@ -129,9 +166,6 @@ def verify(origin, fixture_reply=None, browser_executable=None):
                     raise AssertionError("AI fixture reply was not visible to both members")
             require(outsider.get(thread).status_code in (401, 403, 404), "Nonmember could read AI reply")
             print("PASS: both users saw a real Open WebUI @AI thread reply from the offline test fixture")
-
-        if browser_executable:
-            verify_browsers(origin, browser_executable, identities[:2], channel["id"])
 
 
 def main():

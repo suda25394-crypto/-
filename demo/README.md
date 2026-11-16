@@ -33,13 +33,13 @@ uv run --locked --no-sync python -m unittest discover -s tests -p "test_*.py" -v
 uv run --locked --no-sync python tests/verify_webui.py --fresh-local-test http://127.0.0.1:4380
 ```
 
-最后一条会在**空白的一次性 WebUI 实例**创建测试账号、聊天和频道，启动前使用独立测试卷、端口和禁用模型配置。它校验原生 API；可选 `--browser-executable /path/to/chrome` 使用装有 Playwright 的测试环境开启两套隔离登录会话。离线流式端到端测试可让空实例的 OpenAI-compatible 连接指向下述专用测试进程，测试进程须使用独立的 SQLite 路径与令牌。
+最后一条会在**空白的一次性 WebUI 实例**创建测试账号、聊天和频道，启动前使用独立测试卷、端口和禁用模型配置。它校验原生 API；可选 `--browser-executable /path/to/chrome` 使用装有 Playwright 的测试环境开启两套带触控模拟的手机浏览器会话。离线流式端到端测试可让空实例的 OpenAI-compatible 连接指向下述专用测试进程，测试进程须使用独立的 SQLite 路径与令牌。
 
 ```text
 uv run --locked --no-sync python -m uvicorn --app-dir tests deepseek_fixture:create_fixture_app --factory --host 127.0.0.1 --port 4381
 ```
 
-为测试进程设置 `DEEPSEEK_ENABLED=true`、`DEEPSEEK_API_KEY=fixture-only`、`DEMO_GATEWAY_TOKEN` 和独立的 `DEMO_BUDGET_DB`。将测试实例的 OpenAI-compatible 地址设为能访问该进程的 `/v1`，再运行 `verify_webui.py` 并附上 `--fixture-reply "OFFLINE TEST FIXTURE."`。这里的固定文本用于验证回复传输和可见性。部署镜像排除了测试代码。
+为测试进程设置 `DEEPSEEK_ENABLED=true`、`DEEPSEEK_API_KEY=fixture-only`、`DEMO_GATEWAY_TOKEN` 和独立的 `DEMO_BUDGET_DB`。将测试实例的 OpenAI-compatible 地址设为能访问该进程的 `/v1`，再运行 `verify_webui.py` 并附上 `--fixture-reply "OFFLINE TEST FIXTURE."`。同时指定 Chromium 可执行文件时，第一个会话会触控点选 `@AI` 并发送，两个会话都会在不刷新页面的情况下点开同一回复线程。部署镜像排除了测试代码。
 
 现场验收使用两个独立浏览器会话及两部手机。先确认私网 HTTPS 的服务地址仅允许指定成员到达，然后保留以下证据：
 

@@ -136,3 +136,16 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **原生 Open WebUI 本机端到端**：安装官方 0.13.3 wheel 与同版本 Slim 依赖，启用 Slim 运行模式，用独立临时数据库。两个普通用户模型权限独立授予，第三账号无模型权限；私聊双向隔离，通过 WebUI 管理员接口也不能按 ID 读普通用户私聊。两位成员互见消息，第三账号无法列出、读取或发消息。Open WebUI 的真实 `@AI` 响应链路经离线测试传输验证，两位成员看到同一线程回复。
 - **浏览器与资源取样**：Playwright 1.65.2、Chrome 157.0.8103.79，两套隔离的 390×844 会话均实际登录并渲染共同频道。Windows 原生 WebUI 进程 working set 328 MiB，峰值 334 MiB；Linux 容器和真实模型负载的资源峰值待查。原生测试日志位于本机 `%TEMP%/couple-demo-upstream-v0133/smoke-0ff8279c10/`，三个日志文件分别为 `open-webui.log`、`gateway-disabled.log`、`gateway-fixture.log`。
 - **现场验收待做**：阿里云 SSH 和实际 OS/端口/已有服务核验、Linux Compose 运行、DeepSeek 密钥和计费授权、真实模型用量、两部手机连接及用户验收。当前只有本地合成账号，待获授权后按部署说明验证真实聊天，再进入阶段 2 档案和阶段 3 联动。
+
+## 2026-11-16｜补齐手机群聊交互验收
+
+- [浏览器验收脚本](../demo/tests/verify_webui.py)在两套独立、启用触控模拟的 390×844 Chromium 会话中运行。账号 A 从真实提及菜单点选 AI，发送中文群聊消息，等 B 实时收到；双方点击同一条消息下的回复并读到离线流式响应，期间无需刷新。第三个账号在接口层仍无法读取该回复。真实 API 请求为零。
+- 当前分支本机验证通过，网关回归 8/8，Open WebUI 0.13.3 的 Windows 原生进程取样 328 MiB、峰值 333 MiB。运行证据在 `%TEMP%/couple-demo-upstream-v0133/smoke-229f8eb583/`。真正两部手机、Linux 容器用量、服务器权限和 DeepSeek 请求仍需现场验证。
+- [ECS 审计与部署预案](ECS_DEPLOYMENT_PLAN.md)优先走已登录的阿里云控制台与云助手，以便用户只负责登录。云助手可用性、实际资源及部署均待核实。
+
+## 2026-11-16｜完成阿里云 ECS 只读审计
+
+- 按用户指定的密码登录方式，以 `couple-deploy` 在目标 ECS 实测。Debian 13.7（x86_64），2 vCPU，负载 0.07 / 0.03 / 0.00。内存 1,746 MiB、可用 1,353 MiB。`/swapfile` 约 4 GiB，复核时用了 524 KiB。根盘与 Docker 数据目录所在文件系统约 40 GiB，可用约 26 GiB，占用 31%。
+- Docker 客户端与服务端均为 29.9.3，Compose v5.7.1。Docker 正在运行且已启用开机启动。无容器（含已停止容器），Compose 项目列表为空。Tailscale 守护进程正在运行，地址为 `100.127.243.70`，Serve 配置为空。无 TCP 80、443、4380 监听。系统主要服务含 Docker、containerd、SSH、Tailscale、阿里云助手及安全代理。`dsh-web.service` 显示 failed，且当前找不到 unit 文件。
+- `couple-deploy` 确在 Docker 组，能直接管理 Docker，权限等效 root。`sudo -n` 提示需要密码，本次已核实监听端口，进程归属未核实。
+- 无凭据 HTTPS 探测中，GHCR、PyPI、Python 文件下载域和 DeepSeek 入口均返回 HTTP 响应，Docker Hub registry 直连出现连接超时。未拉取镜像或调用模型。该审计未变更服务器配置和服务，部署仍待明确授权。
