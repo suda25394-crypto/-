@@ -55,6 +55,7 @@
 | **科学题库与个性化画像 V1** | [docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 已核验中文 Mini-IPIP 20题依据，定稿图文画像、确认更新规则，待开发 |
 | **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已部署底座、真实验收状态、未实现能力与下一步 |
 | **服务器交接** | [planning/SERVER_HANDOVER_2026-11-16.md](planning/SERVER_HANDOVER_2026-11-16.md) | Open WebUI 与网关已部署；DeepSeek 未启用；Tailscale 私网入口已配置 |
+| **手机 PWA 实施方案** | [planning/MOBILE_PWA_PLAN.md](planning/MOBILE_PWA_PLAN.md) | 复用 Open WebUI 原生 PWA；本地验证完成，公网 HTTPS 与真机安装待验收 |
 | 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT 总控、Codex 开发、Muse 运维，以及重要变化主动同步规则 |
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
 | **对话方向审计** | [history/DIRECTION_AUDIT_2026-11-16.md](history/DIRECTION_AUDIT_2026-11-16.md) | 逐轮核对真实意图、识别范围漂移与留存机制 |
