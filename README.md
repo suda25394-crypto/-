@@ -60,15 +60,14 @@
 | **交互原型 V0.2** | [prototype/v0.2/index.html](prototype/v0.2/index.html) · [说明](prototype/v0.2/README.md) | 历史 AI 首页草稿，用户反馈信息密集，未通过设计验收 |
 | **交互原型 V0.3** | [prototype/v0.3/index.html](prototype/v0.3/index.html) · [说明](prototype/v0.3/README.md) | 统一 AI 对话、展示卡片的上一版，用户指出仍有冗余 |
 | **手机抽卡 V0.4** | [prototype/v0.4/index.html](prototype/v0.4/index.html) · [说明](prototype/v0.4/README.md) | 五套手机端 UI 抽卡评选，用户可收藏方案，待用户体验 |
-| **V0.5 抽卡探索** | [prototype/v0.5/index.html](prototype/v0.5/index.html) · [说明](prototype/v0.5/README.md) | 五种真正不同的手机交互结构，**用户尚未选定** |
-
+| **V0.5 抽卡探索** | [prototype/v0.5/index.html](prototype/v0.5/index.html) · [说明](prototype/v0.5/README.md) | 用户仅认可 03 环形中枢，作为下一版选稿基础 |
 | **V0.6 环形 AI 中枢** | [prototype/v0.6/index.html](prototype/v0.6/index.html) · [说明](prototype/v0.6/README.md) | 选择 03 方案继续深化：12 个模块、详情、修改与确认、独立小宇宙，待用户验收 |
 
 ## 当前优先事项
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
-2. **原型存在但范围偏窄**：V0.1 演示的是小宇宙、模板建议等局部体验；不等于已经验证 AI 主导的生态链。
-3. **低成本修正**：先整理大纲与轻量动态联动体验，不急于开发庞大虚拟世界或昂贵实时生成。
+2. **当前 V0.6 已补齐交互原型**：12 模块、独立小宇宙、手动修改和 AI 确认均有可操作演示，但真实模型、双人共享、长期记忆服务尚未接入。
+3. **下一步优先验证体验与 AI 真实性**：先验收手机 UI 与修改流程，再确定低成本真实模型与后端记忆的接入范围。
 4. **验证后迭代**：用户希望先做出来再逐步完善，不再围绕单个功能无休止追问。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
