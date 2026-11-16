@@ -53,9 +53,9 @@
 | 竞品调查 | [research/COMPETITORS.md](research/COMPETITORS.md) | 海内外产品参考，仍需逐项核验 |
 | 创意储备 | [ideas/BACKLOG.md](ideas/BACKLOG.md) | 未确立需求与未来功能 |
 | **科学题库与个性化画像 V1** | [docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 已核验中文 Mini-IPIP 20题依据，定稿图文画像、确认更新规则，待开发 |
-| **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已实现、未实现、下一步 |
-| **Codex Demo 开工任务** | [planning/CODEX_DEMO_KICKOFF.md](planning/CODEX_DEMO_KICKOFF.md) | 已备妥可执行的分阶段工程指令，实际部署尚未开始 |
-| 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT / Codex / DSH 如何处理变更 |
+| **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已部署底座、真实验收状态、未实现能力与下一步 |
+| **服务器交接** | [planning/SERVER_HANDOVER_2026-11-16.md](planning/SERVER_HANDOVER_2026-11-16.md) | Open WebUI 与网关已部署；DeepSeek 未启用；Tailscale 私网入口已配置 |
+| 协作约定 | [planning/WORKFLOW.md](planning/WORKFLOW.md) | GPT 总控、Codex 开发、Muse 运维，以及重要变化主动同步规则 |
 | 演变记录 | [history/DISCUSSION.md](history/DISCUSSION.md) | 初始需求至本次纠偏 |
 | **对话方向审计** | [history/DIRECTION_AUDIT_2026-11-16.md](history/DIRECTION_AUDIT_2026-11-16.md) | 逐轮核对真实意图、识别范围漂移与留存机制 |
 | **历史原型 V0.1** | [prototype/v0.1/](prototype/v0.1/) | “双生宇宙”单页局部演示，历史资料保留 |
@@ -68,8 +68,8 @@
 ## 当前优先事项
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
-2. **当前 V0.6 已补齐交互原型**：12 模块、独立小宇宙、手动修改和 AI 确认均有可操作演示，但真实模型、双人共享、长期记忆服务尚未接入。
-3. **下一步优先验证体验与 AI 真实性**：先验收手机 UI 与修改流程，再确定低成本真实模型与后端记忆的接入范围。
+2. **服务器底座已部署**：Open WebUI 与 DeepSeek Gateway 已运行，Tailscale 私网入口已配置；真实 DeepSeek 尚未启用，两部手机尚待验收。
+3. **下一步优先完成伴侣无 Tailscale 访问方案与 PWA 评估**，随后接入真实 DeepSeek 并进行双手机验收。
 4. **验证后迭代**：用户希望先做出来再逐步完善，不再围绕单个功能无休止追问。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
