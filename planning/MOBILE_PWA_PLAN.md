@@ -48,3 +48,11 @@
 | 测试边界 | 在本机回环地址用合成账号和离线模型夹具。没有在 Android/iOS 实装测试，没有验证公网可达性或真实回复；无真实 DeepSeek 调用，没有变更 ECS 网络、DNS 或代理。 |
 
 复查方法：启动一次性的原生 WebUI，用 `GET /manifest.json` 和 PNG 请求核对品牌字段；在独立 Chrome 配置的 DevTools Application → Manifest 检查。以已有端到端脚本测试移动群聊；打开私聊和共同频道，记录两种视口的截图及 `document.documentElement.scrollWidth - innerWidth`。本机临时证据位于 `%TEMP%/couple-demo-upstream-v0133/smoke-89fd16a61a/` 和 `smoke-e791ebe2af/`，包含合成账号界面截图和测试服务日志。 [Chrome PWA 调试](https://developer.chrome.com/docs/devtools/progressive-web-apps/)
+
+
+## 2026-11-17｜公网 HTTPS 入口已开通
+
+- Muse 已开通 Tailscale Funnel，现有 HTTPS 地址为 `https://iz2zecx08mwosw8t20kovoz.tail13b871.ts.net/`；站外 HTTP 200、首页与健康检查正常，原私网入口仍正常。实施证据见 [Funnel 实施记录](PUBLIC_ACCESS_FUNNEL_2026-11-17.md)。
+- 因此本方案原先的“等待公网 HTTPS 地址”条件已满足，可以进入真实账号和手机验收。
+- **尚未完成**：Demo A / Demo B 真实密码登录、Android/iPhone 真机添加到主屏幕、冷启动、移动数据访问，以及双手机私聊/共同频道复测。
+- 当前验收顺序：双方分别用自己的账号从普通网络打开上述地址并登录；通过后再按本文件前文安装 PWA。不要把账号密码发到聊天或写入仓库。
