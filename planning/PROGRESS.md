@@ -151,8 +151,8 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 
 - Muse 完成服务器只读检查与方案比较；[评估摘要](PUBLIC_ACCESS_ASSESSMENT_2026-11-17.md)。检查期间没有改服务器配置、安装 cloudflared、开启 Funnel 或开放端口。
 - 实测：Open WebUI 与 DeepSeek Gateway 均运行健康；WebUI 仅回环绑定，Gateway 仅 Docker 内网；Tailscale Serve 仍仅 Tailnet 可访问；Funnel 未开启，cloudflared 未安装；DeepSeek 仍未启用。
-- Muse 推荐 **Cloudflare Tunnel + Cloudflare Access**：提供独立公网入口，并可用邮箱验证码限制访问；需要稳定域名。**Tailscale Funnel 是备选**：免新域名、部署简单，但公网与私网共用同一地址，且没有 Access 前置身份校验。
-- 当前仍是待用户确认的方案选择，不能把评估报告当成部署完成，也不要再次向 Muse 重复发送未结合本报告的新部署指令。
+- Muse 的原始评估建议 Cloudflare Tunnel + Access，Funnel 当时列为备选；**该建议已被用户后续明确选择覆盖**。用户已批准先用免费的 Tailscale Funnel 试运行，见本文件下方最新记录及 `docs/DECISIONS.md` D-37。
+- 当前不是待选方案，也不是部署完成；现在唯一待执行事项是 Muse 按 D-37 实际开启 Funnel 并做普通互联网验收。不得再让 Muse 重复调研或让用户重复发送评估指令。
 - 安全待办：交接材料曾暴露 SSH 密码和私钥，应单独安排轮换；尚未执行。WebUI 继续回环绑定、关闭公开注册，不开放 4380 或 SSH 管理入口。
 
 
