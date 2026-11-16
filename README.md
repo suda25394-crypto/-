@@ -62,6 +62,8 @@
 | **手机抽卡 V0.4** | [prototype/v0.4/index.html](prototype/v0.4/index.html) · [说明](prototype/v0.4/README.md) | 五套手机端 UI 抽卡评选，用户可收藏方案，待用户体验 |
 | **V0.5 抽卡探索** | [prototype/v0.5/index.html](prototype/v0.5/index.html) · [说明](prototype/v0.5/README.md) | 五种真正不同的手机交互结构，**用户尚未选定** |
 
+| **V0.6 环形 AI 中枢** | [prototype/v0.6/index.html](prototype/v0.6/index.html) · [说明](prototype/v0.6/README.md) | 选择 03 方案继续深化：12 个模块、详情、修改与确认、独立小宇宙，待用户验收 |
+
 ## 当前优先事项
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
