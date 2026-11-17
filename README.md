@@ -78,6 +78,6 @@
 3. **[公网入口已开通](planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md)**：免费 Tailscale Funnel 可供未安装 Tailscale 的手机访问；原私网入口仍正常。
 4. **本地情侣前端 V1 已交付**：[运行说明](frontend/README.md) · [实施记录](planning/FRONTEND_V1_IMPLEMENTATION_2026-11-17.md)，位于 `codex/couple-frontend-v1` 分支，尚未合并 main。
 5. **视觉验收未通过**：用户认为当前图形平庸、不够惊艳；详见[视觉评审](planning/FRONTEND_V1_DESIGN_REVIEW_2026-11-17.md)。本地交互可运行不等于 UI 验收通过。
-6. **当前下一步建议**：先做 3 个真正不同的手机端视觉方向样本，用户选定后再扩展整套 UI；暂不部署当前视觉版本，也不接真实模型。
+6. **2026-11-18 最新客户端任务（D-40）**：用户改变当前开发优先级，授权 Codex 使用 **Flutter + Dart 开发 Android 客户端**，自主配置并验证 Windows 本地 Flutter/Android Studio/模拟器环境，要求 IDE 左侧可见代码、右侧 Android 模拟器运行，支持 Hot Reload。旧 Web 项目与现有服务器保留。3 套视觉方向仍是设计建议，尚非已批准定稿。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
