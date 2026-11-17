@@ -67,6 +67,10 @@
 | **V0.5 抽卡探索** | [prototype/v0.5/index.html](prototype/v0.5/index.html) · [说明](prototype/v0.5/README.md) | 用户仅认可 03 环形中枢，作为下一版选稿基础 |
 | **V0.6 环形 AI 中枢** | [prototype/v0.6/index.html](prototype/v0.6/index.html) · [说明](prototype/v0.6/README.md) | 选择 03 方案继续深化：12 个模块、详情、修改与确认、独立小宇宙，待用户验收 |
 
+## 当前发布路径（2026-11-17 用户确认）
+
+**先做手机浏览器可直接使用的 Web 版**，经过功能与体验迭代、相对完善后，再考虑推出正式安装的 App。此决策只确认先后顺序，**不等于 React / Flutter / PWA / Capacitor 等技术栈已定稿**。现有 Open WebUI 公网入口是开发底座；情侣前端 V1 仍在视觉改进阶段，未验收上线。见 [D-39](docs/DECISIONS.md)。
+
 ## 当前优先事项
 
 1. **主轴已确认**：AI 动态调度多个情侣功能，而非单一宇宙。
