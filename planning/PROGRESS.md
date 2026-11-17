@@ -229,3 +229,12 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **用户明确决定**：先做在手机浏览器中使用的情侣产品网页，待更新完善到相对成熟后再考虑正式安装版 App，依据 [D-39](../docs/DECISIONS.md)。
 - **没有新技术选型**：React/Vite、Flutter、PWA、Capacitor 均未因本轮对话被用户正式选定；不要求替换现有 Open WebUI 底座或推翻已有前端工作。
 - **实际成果边界**：沿用此前公网入口与本地前端 V1 的记录；本轮只更新产品发布策略，不代表网页 UI、真实 AI、双人同步、浏览器真机体验或 App 已通过验收。
+
+
+## 2026-11-18｜Android Flutter 开发方向已获授权，环境与客户端尚待 Codex 执行
+
+- **用户最新明确要求（D-40）**：由 Codex 改为使用 Flutter + Dart 开发情侣 AI Android 客户端；要求 Codex 自行安装、配置、修复和验证开发环境，并在电脑显示“左侧代码 / 右侧 Android 模拟器”的可见预览，代码变更可通过 Hot Reload 快速呈现。
+- **决策关系**：这覆盖 D-39 中“当前先继续 Web 开发”的施工顺序，但不等于用户要求删除 Web 成果或放弃现有 Open WebUI + DeepSeek Gateway 服务器底座；历史 Web 原型和 V1 保留。
+- **建议实现载体**：Windows 本地 Android Studio + Flutter/Dart 插件 + Android SDK / AVD（Running Devices 工具窗口）和 Flutter SDK，实际安装版本由 Codex 核对最新官方兼容说明后选择；以 `flutter doctor -v`、`flutter devices`、模拟器真启动、最小 Flutter UI 运行和 Hot Reload 实证验收。
+- **实际状态**：本轮仅用户确认开发方向及编写移交指令；Flutter/Android Studio/SDK/模拟器是否已有安装、是否能运行、Android APK 是否已构建，均**尚未核验**。不能把计划冒充执行结果。
+- **任务边界**：开发负责人 Codex，服务器运维 Muse；使用既有架构、业务逻辑和已批准功能，不擅自改产品定位；维持科学配色 D-38、用户视觉验收未通过的事实。优先交付可见实时预览与首个可运行 Android UI，再发展全模块和真实 API 接入。
