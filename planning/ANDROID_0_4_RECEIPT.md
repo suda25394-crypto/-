@@ -52,6 +52,6 @@ Android 文件选择器已实际打开并导入合成海报；日期、地点回
 
 ## APK 与重跑
 
-APK 为 Android 测试签名包，`com.coupleai.couple_app`，versionCode 4，最低 Android 7（API 24），包含 arm64-v8a、armeabi-v7a、x86_64。APK 签名 v2 已验证。200,204,513 字节，SHA-256 `6bfa98dd4b3d171428fe1d10137cbe792f2b8a6e469087ed3f76bc757eb9dcde`。配套服务请选 `couple-service-r2-*.zip`，用同页 `SHA256SUMS-r2.txt` 同时核对 APK 和 ZIP。初版服务 ZIP 解包后，在隔离路径重跑工具、网关和对话路由的 16 项测试通过。
+APK 为 Android 测试签名包，`com.coupleai.couple_app`，versionCode 4，最低 Android 7（API 24），包含 arm64-v8a、armeabi-v7a、x86_64。APK 签名 v2 已验证。200,204,513 字节，SHA-256 `6bfa98dd4b3d171428fe1d10137cbe792f2b8a6e469087ed3f76bc757eb9dcde`。配套服务请选 `couple-service-r2-*.zip`，用同页 `SHA256SUMS-r2.txt` 同时核对 APK 和 ZIP。最终配套服务为 `47f5469`，ZIP 的 SHA-256 为 `181b73ede1d9745366bc9c3c6f07cf349e8c43852c5141d4ed71c59b8a3c3335`。在新的隔离路径解包发布 ZIP，复查健康响应 schema 3、service_revision 2，工具、网关、计划流转和对话路由共 21 项复验通过。
 
 在仓库根目录运行 `python -m unittest discover -s services/couple/tests -t .`、`python -m unittest discover -s tests`。运行旧版本迁移回归需要本地 Git 含上述旧提交。另起窗口执行 `python -m services.couple.tests.fixture --port 18793`，然后在 `apps/android` 运行 `flutter analyze --no-pub`、`flutter test --no-pub --dart-define=COUPLE_FIXTURE_URL=http://127.0.0.1:18793`，每次全量联调使用新数据库。构建命令为根目录的 `./tools/build-test-apk.ps1`。在模拟器再运行 `adb reverse tcp:18793 tcp:18793`，用应用里的合成测试账号连接这一回环端口。手机公网地址由 Muse 完成现场验收后私下交付。

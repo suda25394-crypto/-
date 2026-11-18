@@ -16,6 +16,8 @@
 
 定版合计 59 项服务端及网关、4 项仓库、30 项 Flutter 测试通过。实装 APK 哈希与发布件一致。公网健康检查成功与真实模型调用分别登记。[Android 源码提交](https://github.com/suda25394-crypto/-/commit/25a08a1baf30d760f2fe6cabd154200eb0b931e1)
 
+部署交付固定于[服务源码 47f5469](https://github.com/suda25394-crypto/-/commit/47f54695f7d117d44592ec24d09e02196a4b1194)；修订 2 ZIP 做了独立解包、哈希校验和 21 项回归。发版时 main 前进至 [d6c4af7](https://github.com/suda25394-crypto/-/commit/d6c4af706ea35f9ff2626ffee422517562f8231a)，仅追加 D-49 聊天首页选稿，Android 功能任务书未变。本次 APK 保留原界面，D-49 的客户端实施另行登记。
+
 ## 2026-11-18 · 规划与开发同步
 
 仓库所有者已将本仓库设为公开，并授权同步测试版。规划基线为 main 的 D-48，Android 0.3.0+3 已验收 D-42、D-43。Muse 部署状态由用户单独对接。[给规划 GPT 的交接页、剩余工作与验收入口](ANDROID_PLANNING_HANDOFF.md)
