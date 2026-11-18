@@ -1,0 +1,40 @@
+name: couple-product
+services:
+  product:
+    image: couple-product:${PRODUCT_IMAGE_TAG:?Set the release commit}
+    build:
+      context: ../..
+      dockerfile: deploy/couple/Dockerfile
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports: ["127.0.0.1:8787:8787"]
+    environment:
+      COUPLE_DB: /data/product.sqlite3
+      COUPLE_USER_A_ID: ${COUPLE_USER_A_ID:?Expected A account ID}
+      COUPLE_USER_B_ID: ${COUPLE_USER_B_ID:?Expected B account ID}
+      COUPLE_CHANNEL_ID: ${COUPLE_CHANNEL_ID:?Expected private channel ID}
+      COUPLE_SESSION_KEY_FILE: /run/secrets/session.key
+      DEMO_GATEWAY_TOKEN_FILE: /run/secrets/gateway.token
+      OPENWEBUI_URL: http://webui:8080
+      GATEWAY_URL: http://deepseek-gateway:8000
+      DEMO_DAILY_REQUESTS: ${DEMO_DAILY_REQUESTS:-30}
+      DEMO_MAX_OUTPUT_TOKENS: ${DEMO_MAX_OUTPUT_TOKENS:-1024}
+    volumes:
+      - product-data:/data
+      - ./secrets:/run/secrets:ro
+    networks: [existing]
+    tmpfs: [/tmp]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/v1/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  product-data:
+networks:
+  existing:
+    external: true
+    name: ${WEBUI_DOCKER_NETWORK:?Set existing WebUI and Gateway network}

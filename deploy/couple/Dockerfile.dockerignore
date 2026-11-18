@@ -1,0 +1,9 @@
+**
+!services/
+!services/couple/
+!services/couple/*.py
+!deploy/
+!deploy/couple/
+!deploy/couple/Dockerfile
+!deploy/couple/requirements.lock
+!deploy/couple/data_tool.py
