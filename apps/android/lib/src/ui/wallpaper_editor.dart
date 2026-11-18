@@ -96,7 +96,7 @@ class _WallpaperEditorState extends State<WallpaperEditor> {
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: const Color(0xffdfd4fa)),
+                          border: Border.all(color: const Color(0xffe5d2eb)),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Stack(
@@ -129,7 +129,7 @@ class _WallpaperEditorState extends State<WallpaperEditor> {
                                 alignment: Alignment.centerRight,
                                 child: Chip(
                                   label: Text('聊天气泡预览'),
-                                  backgroundColor: Color(0xfff0ebfc),
+                                  backgroundColor: Color(0xfff1e7f6),
                                   side: BorderSide.none,
                                 ),
                               ),

@@ -29,7 +29,11 @@ class _ChatFixture extends CloudSession {
   Future<dynamic> mutate(String method, String path, [Json? body]) async {
     expect(path, '/v1/messages');
     sent.add({...body!});
-    if (uncertain) throw const CloudError('结果待核对。', 409, 'outcome_unknown');
+    if (uncertain) {
+      // Production mutate reconciles a conflict before returning the error.
+      await refresh();
+      throw const CloudError('结果待核对。', 409, 'outcome_unknown');
+    }
     final scope = body['scope'] as String;
     final text = body['text'] as String;
     final callsModel = scope == 'private' || text.contains('@DP');

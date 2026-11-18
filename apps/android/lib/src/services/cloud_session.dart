@@ -8,6 +8,24 @@ import 'package:http/http.dart' as http;
 
 typedef Json = Map<String, dynamic>;
 
+bool _sameSnapshot(Object? a, Object? b) {
+  if (identical(a, b)) return true;
+  if (a is List && b is List) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!_sameSnapshot(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  if (a is Map && b is Map) {
+    return a.length == b.length &&
+        a.keys.every(
+          (key) => b.containsKey(key) && _sameSnapshot(a[key], b[key]),
+        );
+  }
+  return a == b;
+}
+
 class CloudError implements Exception {
   const CloudError(this.message, [this.status = 0, this.code = 'network']);
   final String message;
@@ -60,7 +78,10 @@ class CloudSession extends ChangeNotifier {
   String endpoint = const String.fromEnvironment('COUPLE_SERVICE_URL');
   String _token = '';
   int _epoch = 0;
-  int _syncNumber = 0;
+  int _writeGeneration = 0;
+  int _readGeneration = 0;
+  int _appliedGeneration = 0;
+  Future<void>? _activeRead;
   Json state = {};
   Json get user => (state['user'] as Json?) ?? {};
   bool get signedIn => _token.isNotEmpty;
@@ -201,24 +222,59 @@ class CloudSession extends ChangeNotifier {
     return payload;
   }
 
-  Future<void> refresh() async {
-    if (!signedIn) return;
-    final id = ++_syncNumber;
+  Future<void> refresh() {
+    if (!signedIn) return Future.value();
     final epoch = _epoch;
+    final active = _activeRead;
+    if (active != null) {
+      if (_readGeneration == _writeGeneration) return active;
+      // The outstanding read started before a confirmed mutation. Reconcile
+      // after it settles; concurrent callers will share that next read.
+      Future<void> follow() => epoch == _epoch ? refresh() : Future.value();
+      return active.then((_) => follow(), onError: (Object _) => follow());
+    }
+    final generation = _readGeneration = _writeGeneration;
+    late final Future<void> result;
+    result = _readSnapshot(epoch, generation).whenComplete(() {
+      if (identical(_activeRead, result)) _activeRead = null;
+    });
+    return _activeRead = result;
+  }
+
+  Future<void> _readSnapshot(int epoch, int generation) async {
     try {
       final next = await request('GET', '/v1/state');
       if (next is! Json || next['user'] is! Json || next['messages'] is! Json) {
         throw const CloudError('服务端未返回完整的空间数据。');
       }
-      if (id != _syncNumber || epoch != _epoch) return;
-      state = next;
+      if (generation != _writeGeneration || epoch != _epoch) return;
+      final changed = !_sameSnapshot(state, next);
+      _appliedGeneration = generation;
+      if (!changed && connectionError == null) return;
+      if (changed) state = next;
       connectionError = null;
-    } catch (e) {
-      if (id == _syncNumber && epoch == _epoch) connectionError = e.toString();
-      rethrow;
-    } finally {
       _updated();
+    } catch (e) {
+      if (epoch == _epoch &&
+          generation == _writeGeneration &&
+          connectionError != e.toString()) {
+        connectionError = e.toString();
+        _updated();
+      }
+      rethrow;
     }
+  }
+
+  Future<void> _refreshAfterWrite() async {
+    final epoch = _epoch;
+    final write = ++_writeGeneration;
+    // Another write may supersede the read that this mutation initiated.
+    // Wait until a snapshot covering our write is applied before returning.
+    do {
+      final requested = _writeGeneration;
+      await refresh();
+      if (requested == _writeGeneration) return;
+    } while (signedIn && _epoch == epoch && _appliedGeneration < write);
   }
 
   Future<dynamic> mutate(String method, String path, [Json? body]) async {
@@ -226,7 +282,7 @@ class CloudSession extends ChangeNotifier {
       final result = await request(method, path, body);
       // A confirmed write must not be submitted twice if the following read fails.
       try {
-        await refresh();
+        await _refreshAfterWrite();
       } on CloudError {
         /* surfaced by connection status */
       }
@@ -234,7 +290,7 @@ class CloudSession extends ChangeNotifier {
     } on CloudError catch (e) {
       if (e.status == 409) {
         try {
-          await refresh();
+          await _refreshAfterWrite();
         } catch (_) {}
       }
       rethrow;
@@ -265,7 +321,7 @@ class CloudSession extends ChangeNotifier {
 
   Future<void> _forget() async {
     _epoch++;
-    _syncNumber++;
+    _activeRead = null;
     _token = '';
     state = {};
     connectionError = null;

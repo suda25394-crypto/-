@@ -27,6 +27,7 @@ class _PairedShellState extends State<PairedShell> {
     userId: session.user['id'].toString(),
   )..load();
   int tab = 0;
+  final visitedTabs = <int>{0};
   static const tabs = [
     ('聊天', Icons.chat_bubble_outline, Icons.chat_bubble),
     ('功能', Icons.grid_view_outlined, Icons.grid_view_rounded),
@@ -56,6 +57,7 @@ class _PairedShellState extends State<PairedShell> {
         children: [
           if (photo != null)
             Image.memory(photo, fit: BoxFit.cover, excludeFromSemantics: true),
+          if (photo == null) const ColoredBox(color: purplePaper),
           CloudChat(
             session: session,
             scope: scope,
@@ -122,7 +124,11 @@ class _PairedShellState extends State<PairedShell> {
 
   void select(int value) {
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => tab = value);
+    if (tab == value) return;
+    setState(() {
+      tab = value;
+      visitedTabs.add(value);
+    });
   }
 
   @override
@@ -187,18 +193,27 @@ class _PairedShellState extends State<PairedShell> {
                   index: tab,
                   children: [
                     chat('shared'),
-                    FeaturesTab(
-                      session: session,
-                      openModule: module,
-                      openPrivateChat: privateChat,
-                    ),
-                    DailyTab(session: session, openModule: module),
-                    MineTab(
-                      session: session,
-                      openPrivateChat: privateChat,
-                      editBackground: editBackground,
-                      onAccount: account,
-                    ),
+                    if (visitedTabs.contains(1))
+                      FeaturesTab(
+                        session: session,
+                        openModule: module,
+                        openPrivateChat: privateChat,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (visitedTabs.contains(2))
+                      DailyTab(session: session, openModule: module)
+                    else
+                      const SizedBox.shrink(),
+                    if (visitedTabs.contains(3))
+                      MineTab(
+                        session: session,
+                        openPrivateChat: privateChat,
+                        editBackground: editBackground,
+                        onAccount: account,
+                      )
+                    else
+                      const SizedBox.shrink(),
                   ],
                 ),
               ),

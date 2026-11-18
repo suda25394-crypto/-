@@ -15,8 +15,8 @@ const _chatInk = Color(0xff242328);
 const _chatSecondary = Color(0xff64626b);
 const _chatLine = Color(0xffe9e8ec);
 const _chatSurface = Color(0xfff5f5f6);
-const _chatLilac = Color(0xfff0ebfc);
-const _chatViolet = Color(0xff6939c7);
+const _chatLilac = mist;
+const _chatViolet = pine;
 
 class CloudFeedback extends StatelessWidget {
   const CloudFeedback({
@@ -95,11 +95,31 @@ class _CloudChatState extends State<_ScopedChat> {
     caseSensitive: false,
   );
   final _input = TextEditingController();
+  late final _scroll = ScrollController()..addListener(_onScroll);
+  Object? _historyTail;
+  int _heldMessages = 0;
+  String? _outgoing, _outgoingId;
   bool _sending = false;
   Json? _receipt;
   String? _key, _failedText, _error;
   bool _unknown = false;
   bool get _shared => chat.scope == 'shared';
+
+  void _onScroll() {
+    if (_heldMessages > 0 && _scroll.offset <= 1) {
+      setState(() => _historyTail = null);
+    }
+  }
+
+  void _returnToLatest() {
+    setState(() => _historyTail = null);
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  List<Json> get _rows => chat.thread == null
+      ? chat.session.messages(chat.scope)
+      : (chat.thread!['messages'] as List).whereType<Json>().toList();
+
   Future<void> _send() async {
     final text = _input.text.trim();
     if (_sending || text.isEmpty) return;
@@ -111,10 +131,14 @@ class _CloudChatState extends State<_ScopedChat> {
       return;
     }
     if (_failedText != text || _key == null) _key = newRequestId();
+    _returnToLatest();
     setState(() {
       _sending = true;
       _error = null;
+      _outgoing = text;
+      _outgoingId = _key;
     });
+    _input.clear();
     try {
       if (chat.sendInModule case final send?) {
         await send(text, _key!);
@@ -130,22 +154,29 @@ class _CloudChatState extends State<_ScopedChat> {
             : null;
       }
       if (!mounted) return;
-      _input.clear();
+      if (chat.session.connectionError == null) _outgoing = null;
       _key = null;
       _failedText = null;
       _unknown = false;
       _focus.unfocus();
     } catch (e) {
       if (!mounted) return;
+      _outgoing = null;
+      _input.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
       _failedText = text;
       if (e is CloudError && e.code == 'version_conflict') _key = null;
       _error = e.toString();
       _unknown =
           e is CloudError &&
           ['outcome_unknown', 'model_outcome_unknown'].contains(e.code);
-      try {
-        await chat.session.refresh();
-      } catch (_) {}
+      if (e is! CloudError || e.status != 409) {
+        try {
+          await chat.session.refresh();
+        } catch (_) {}
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -215,6 +246,7 @@ class _CloudChatState extends State<_ScopedChat> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _focus.dispose();
     _input.dispose();
     super.dispose();
@@ -341,9 +373,48 @@ class _CloudChatState extends State<_ScopedChat> {
   @override
   Widget build(BuildContext context) {
     final thread = chat.thread;
-    final rows = thread == null
-        ? chat.session.messages(chat.scope)
-        : (thread['messages'] as List).whereType<Json>().toList();
+    var rows = _rows;
+    // Keep the last visible history window while the reader is away from the
+    // newest messages. Edits and removals still come from the current snapshot.
+    _heldMessages = 0;
+    if (_scroll.hasClients &&
+        _scroll.offset > 1 &&
+        _historyTail != null &&
+        rows.isNotEmpty &&
+        rows.last['id'] != _historyTail) {
+      final tail = rows.lastIndexWhere(
+        (message) => message['id'] == _historyTail,
+      );
+      if (tail >= 0) {
+        _heldMessages = rows.length - tail - 1;
+        rows = rows.sublist(0, tail + 1);
+      }
+    }
+    _historyTail = rows.lastOrNull?['id'];
+    if (!_sending && chat.session.connectionError == null) _outgoing = null;
+    // R2 shared rows carry server-assigned IDs. Keep the labeled local
+    // submission separate until its POST and read finish. Private rows can
+    // already be reconciled by their exact request ID.
+    final preview = _outgoing;
+    if (preview != null &&
+        _heldMessages == 0 &&
+        !rows.any(
+          (m) =>
+              m['role'] == 'user' &&
+              m['owner'] == chat.session.user['id'] &&
+              (m['request_id'] == _outgoingId || m['id'] == _outgoingId),
+        )) {
+      rows = [
+        ...rows,
+        {
+          'id': 'local-$_outgoingId',
+          'role': 'user',
+          'owner': chat.session.user['id'],
+          'text': preview,
+          '_localDelivery': _sending ? '发送中' : '已发送，等待同步',
+        },
+      ];
+    }
     final pending = chat.session
         .rows('pending_messages')
         .where(
@@ -466,59 +537,88 @@ class _CloudChatState extends State<_ScopedChat> {
             ),
           ),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, box) => Align(
-                alignment: Alignment.topCenter,
-                child: ListView.builder(
-                  key: PageStorageKey((
-                    'conversation',
-                    chat.session.user['id'],
-                    chat.scope,
-                    chat.moduleId,
-                  )),
-                  reverse: true,
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
-                  itemCount:
-                      (rows.isEmpty ? 1 : rows.length) +
-                      (planCard == null ? 0 : 1),
-                  itemBuilder: (_, index) {
-                    if (index == 0 && planCard != null) return planCard;
-                    if (rows.isEmpty) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: (box.maxHeight * .1).clamp(12.0, 60.0),
-                        ),
-                        child: Center(
-                          child: _ChatLabel(
-                            _shared ? '给共同空间写下第一条消息。' : '你的私人对话从这里开始。',
-                            onPhoto: chat.hasBackground,
-                          ),
-                        ),
-                      );
-                    }
-                    final m =
-                        rows[rows.length -
-                            index -
-                            1 +
-                            (planCard == null ? 0 : 1)];
-                    return _ChatMessage(
-                      message: m,
-                      own:
-                          m['owner'] == chat.session.user['id'] &&
-                          m['role'] != 'assistant',
-                      onPhoto: chat.hasBackground,
-                      onActions:
-                          _shared &&
-                              thread == null &&
-                              m['role'] == 'user' &&
-                              m['id'] != null
-                          ? () => _messageActions(m)
-                          : null,
-                    );
-                  },
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                LayoutBuilder(
+                  builder: (context, box) => Align(
+                    alignment: Alignment.topCenter,
+                    child: ListView.builder(
+                      key: PageStorageKey((
+                        'conversation',
+                        chat.session.user['id'],
+                        chat.scope,
+                        chat.moduleId,
+                      )),
+                      reverse: true,
+                      controller: _scroll,
+                      findChildIndexCallback: (key) {
+                        if (key is! ValueKey) return null;
+                        final position = rows.lastIndexWhere(
+                          (row) => row['id'] == key.value,
+                        );
+                        if (position < 0) return null;
+                        return rows.length -
+                            1 -
+                            position +
+                            (planCard == null ? 0 : 1);
+                      },
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+                      itemCount:
+                          (rows.isEmpty ? 1 : rows.length) +
+                          (planCard == null ? 0 : 1),
+                      itemBuilder: (_, index) {
+                        if (index == 0 && planCard != null) return planCard;
+                        if (rows.isEmpty) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: (box.maxHeight * .1).clamp(12.0, 60.0),
+                            ),
+                            child: Center(
+                              child: _ChatLabel(
+                                _shared ? '给共同空间写下第一条消息。' : '你的私人对话从这里开始。',
+                                onPhoto: chat.hasBackground,
+                              ),
+                            ),
+                          );
+                        }
+                        final m =
+                            rows[rows.length -
+                                index -
+                                1 +
+                                (planCard == null ? 0 : 1)];
+                        return _ChatMessage(
+                          key: m['id'] == null ? null : ValueKey(m['id']),
+                          message: m,
+                          own:
+                              m['owner'] == chat.session.user['id'] &&
+                              m['role'] != 'assistant',
+                          onPhoto: chat.hasBackground,
+                          onActions:
+                              _shared &&
+                                  thread == null &&
+                                  m['role'] == 'user' &&
+                                  m['_localDelivery'] == null &&
+                                  m['id'] != null
+                              ? () => _messageActions(m)
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
+                if (_heldMessages > 0)
+                  Positioned(
+                    right: 14,
+                    bottom: 8,
+                    child: FilledButton.tonal(
+                      key: const Key('chat-new-messages'),
+                      onPressed: _returnToLatest,
+                      child: Text('查看 $_heldMessages 条新消息'),
+                    ),
+                  ),
+              ],
             ),
           ),
           if (_error != null)

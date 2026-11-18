@@ -2,17 +2,20 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/catalog.dart';
 import '../services/cloud_session.dart';
+import '../data/pair_activity.dart';
 import 'cloud_profiles.dart';
 import 'daily_life.dart';
 import 'dp_module_chat.dart';
 import 'ginkgo_art.dart';
+import 'pair_activities.dart';
+import 'theme.dart' show pine, mist;
 
 export 'wallpaper_editor.dart' show openWallpaperEditor;
 
 const _ink = Color(0xff242328),
     _muted = Color(0xff64626b),
-    _purple = Color(0xff6939c7),
-    _pale = Color(0xfff0ebfc),
+    _purple = pine,
+    _pale = mist,
     _rule = Color(0xffe9e8ec);
 const _icons = <ModuleId, IconData>{
   ModuleId.date: Icons.confirmation_number_outlined,
@@ -273,6 +276,29 @@ class FeaturesTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         _PlanTicket(session, openModule),
+        const _Heading('两人互动'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final kind in PairActivity.values)
+              OutlinedButton.icon(
+                icon: Icon(
+                  kind == PairActivity.notebook
+                      ? Icons.edit_note_outlined
+                      : Icons.auto_awesome_outlined,
+                ),
+                label: Text(kind.label),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PairActivitiesPage(session: session, kind: kind),
+                  ),
+                ),
+              ),
+          ],
+        ),
         const _Heading('全部功能', '12 项'),
         LayoutBuilder(
           builder: (context, box) {

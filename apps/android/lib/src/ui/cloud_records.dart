@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/catalog.dart';
 import '../services/cloud_session.dart';
+import '../data/pair_activity.dart';
 import 'theme.dart';
 import 'dp_module_chat.dart';
 
@@ -231,16 +232,21 @@ class _MemoryEditorState extends State<MemoryEditor> {
 }
 
 class _ItemFields {
-  _ItemFields(Json data)
+  _ItemFields(Json data, {this.activity})
     : module = data['module'] as String,
       title = TextEditingController(text: data['title'] as String?),
-      body = TextEditingController(text: data['body'] as String?);
+      body = TextEditingController(
+        text:
+            activity?.withoutMarker(data['body'] as String? ?? '') ??
+            data['body'] as String?,
+      );
   final String module;
+  final PairActivity? activity;
   final TextEditingController title, body;
   Json toJson() => {
     'module': module,
     'title': title.text.trim(),
-    'body': body.text.trim(),
+    'body': activity?.storedBody(body.text.trim()) ?? body.text.trim(),
   };
   void dispose() {
     title.dispose();
@@ -257,9 +263,24 @@ class DraftEditor extends StatefulWidget {
 }
 
 class _DraftEditorState extends State<DraftEditor> {
+  late final targetKind = PairActivity.forRecord(
+    widget.session
+        .rows('modules')
+        .where(
+          (row) =>
+              widget.draft['target_id'] != null &&
+              row['id'] == widget.draft['target_id'],
+        )
+        .firstOrNull,
+  );
   late final items = (widget.draft['items'] as List)
       .whereType<Json>()
-      .map(_ItemFields.new)
+      .map(
+        (item) => _ItemFields(
+          item,
+          activity: targetKind?.module == item['module'] ? targetKind : null,
+        ),
+      )
       .toList();
   bool busy = false;
   String? error;
@@ -450,7 +471,10 @@ class CloudModuleEditor extends StatefulWidget {
 }
 
 class _CloudModuleEditorState extends State<CloudModuleEditor> {
-  late final input = _ItemFields({'module': widget.id.name, ...?widget.row});
+  late final input = _ItemFields({
+    'module': widget.id.name,
+    ...?widget.row,
+  }, activity: PairActivity.forRecord(widget.row));
   String requestId = newRequestId();
   String? lastContent, error;
   bool busy = false;

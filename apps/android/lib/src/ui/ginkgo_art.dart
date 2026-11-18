@@ -16,9 +16,9 @@ class GinkgoArt extends CustomPainter {
       (size.height - 444 * scale) * .43,
     );
     canvas.scale(scale);
-    const pale = Color(0xffede8f9), middle = Color(0xffc6b6e7);
-    const violet = Color(0xff6939c7),
-        fold = Color(0xffa38ace),
+    const pale = Color(0xfff1e7f6), middle = Color(0xffd9bbdf);
+    const violet = Color(0xff8038a0),
+        fold = Color(0xffad83b9),
         ink = Color(0xff51465d);
     void stroke(Path path, Color color, double weight) => canvas.drawPath(
       path,

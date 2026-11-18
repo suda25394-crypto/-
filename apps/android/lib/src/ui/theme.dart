@@ -4,11 +4,11 @@ const paper = Color(0xFFFFFFFF);
 const warmSurface = Color(0xFFFFFFFF);
 const ink = Color(0xFF242328);
 const quiet = Color(0xFF64626B);
-const pine = Color(0xFF6939C7);
-const mist = Color(0xFFF0EBFC);
-const amber = Color(0xFF6035AF);
-const amberWash = Color(0xFFF5F1FC);
-const purplePaper = Color(0xFFF4F1F9);
+const pine = Color(0xFF8038A0);
+const mist = Color(0xFFF1E7F6);
+const amber = Color(0xFF71308D);
+const amberWash = Color(0xFFFAF4FC);
+const purplePaper = Color(0xFFF7F0FA);
 const edge = Color(0xFFE9E8EC);
 
 const editionMeta = TextStyle(
@@ -35,6 +35,10 @@ ThemeData coupleTheme() {
     outlineVariant: edge,
     secondaryContainer: mist,
     onSecondaryContainer: pine,
+    primaryContainer: mist,
+    onPrimaryContainer: ink,
+    tertiary: pine,
+    surfaceTint: Colors.transparent,
   );
   const field = OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -43,6 +47,10 @@ ThemeData coupleTheme() {
   return ThemeData(
     colorScheme: scheme,
     scaffoldBackgroundColor: paper,
+    cardTheme: const CardThemeData(
+      color: paper,
+      surfaceTintColor: Colors.transparent,
+    ),
     dividerColor: edge,
     appBarTheme: const AppBarTheme(
       backgroundColor: paper,

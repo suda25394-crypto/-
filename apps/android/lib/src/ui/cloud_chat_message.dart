@@ -26,6 +26,7 @@ class _ChatLabel extends StatelessWidget {
 
 class _ChatMessage extends StatelessWidget {
   const _ChatMessage({
+    super.key,
     required this.message,
     required this.own,
     required this.onPhoto,
@@ -109,15 +110,16 @@ class _ChatMessage extends StatelessWidget {
                     ? CrossAxisAlignment.end
                     : CrossAxisAlignment.start,
                 children: [
-                  _ChatLabel(author, onPhoto: onPhoto),
+                  _ChatLabel(
+                    message['_localDelivery'] == null
+                        ? author
+                        : '$author · ${message['_localDelivery']}',
+                    onPhoto: onPhoto,
+                  ),
                   const SizedBox(height: 3),
                   Container(
                     decoration: BoxDecoration(
-                      color: ai
-                          ? Colors.white
-                          : own
-                          ? _chatLilac
-                          : _chatSurface,
+                      color: own && !ai ? _chatViolet : Colors.white,
                       border: ai ? Border.all(color: _chatLine) : null,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(own ? 13 : 4),
@@ -132,8 +134,8 @@ class _ChatMessage extends StatelessWidget {
                     ),
                     child: SelectableText(
                       message['text'] as String? ?? '',
-                      style: const TextStyle(
-                        color: _chatInk,
+                      style: TextStyle(
+                        color: own && !ai ? Colors.white : _chatInk,
                         fontSize: 15,
                         height: 1.6,
                       ),
