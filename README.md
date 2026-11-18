@@ -81,3 +81,7 @@
 6. **2026-11-18 最新客户端任务（D-40）**：用户改变当前开发优先级，授权 Codex 使用 **Flutter + Dart 开发 Android 客户端**，自主配置并验证 Windows 本地 Flutter/Android Studio/模拟器环境，要求 IDE 左侧可见代码、右侧 Android 模拟器运行，支持 Hot Reload。旧 Web 项目与现有服务器保留。3 套视觉方向仍是设计建议，尚非已批准定稿。
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
+
+## 当前施工任务（2026-11-18，D-41）
+
+[Android 私人 Demo 功能交付](planning/ANDROID_FUNCTIONAL_DEMO.md)｜本机已有可运行客户端与调试 APK，当前由 Codex 接通真实模型、账号、云端业务与双人同步。视觉与用户并行讨论，用户选稿后另行实施。详见[最新进度](planning/PROGRESS.md)。

@@ -238,3 +238,10 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **建议实现载体**：Windows 本地 Android Studio + Flutter/Dart 插件 + Android SDK / AVD（Running Devices 工具窗口）和 Flutter SDK，实际安装版本由 Codex 核对最新官方兼容说明后选择；以 `flutter doctor -v`、`flutter devices`、模拟器真启动、最小 Flutter UI 运行和 Hot Reload 实证验收。
 - **实际状态**：本轮仅用户确认开发方向及编写移交指令；Flutter/Android Studio/SDK/模拟器是否已有安装、是否能运行、Android APK 是否已构建，均**尚未核验**。不能把计划冒充执行结果。
 - **任务边界**：开发负责人 Codex，服务器运维 Muse；使用既有架构、业务逻辑和已批准功能，不擅自改产品定位；维持科学配色 D-38、用户视觉验收未通过的事实。优先交付可见实时预览与首个可运行 Android UI，再发展全模块和真实 API 接入。
+
+
+## 2026-11-18｜本机 Android 进度补记与下一轮功能交付
+
+- **已核对本机产物**：Android 工作区已有 Flutter 源码、十二个模块入口、Android 模拟器及热重载截图、debug APK。上一节记载的是授权当时的状态。本次核对时主要 Android 交付文件仍未提交；证据位置为该工作区的 `apps/android/`、`planning/evidence/flutter/android-workbench/` 及 `planning/evidence/flutter/print-edition/home.png`。尚无证据表明最新界面已打入该 APK 或已在两部真机验收。
+- **当前功能边界**：Android 使用内存演示数据、合成身份和规则导演；云端已有 Open WebUI、网关、Funnel 与 A/B 账号的既往验收记录。真实 DeepSeek、情侣客户端账号接入、业务持久化与跨设备闭环仍待交付。
+- **D-41 新施工顺序**：Codex 接续现有 Android 工程完成[私人 Demo 功能交付任务](ANDROID_FUNCTIONAL_DEMO.md)，用户与 GPT 并行选视觉；用户确认整屏稿后再启动视觉改版。
