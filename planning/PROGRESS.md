@@ -245,3 +245,7 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **已核对本机产物**：Android 工作区已有 Flutter 源码、十二个模块入口、Android 模拟器及热重载截图、debug APK。上一节记载的是授权当时的状态。本次核对时主要 Android 交付文件仍未提交；证据位置为该工作区的 `apps/android/`、`planning/evidence/flutter/android-workbench/` 及 `planning/evidence/flutter/print-edition/home.png`。尚无证据表明最新界面已打入该 APK 或已在两部真机验收。
 - **当前功能边界**：Android 使用内存演示数据、合成身份和规则导演；云端已有 Open WebUI、网关、Funnel 与 A/B 账号的既往验收记录。真实 DeepSeek、情侣客户端账号接入、业务持久化与跨设备闭环仍待交付。
 - **D-41 新施工顺序**：Codex 接续现有 Android 工程完成[私人 Demo 功能交付任务](ANDROID_FUNCTIONAL_DEMO.md)，用户与 GPT 并行选视觉；用户确认整屏稿后再启动视觉改版。
+
+## 2026-11-18｜D-45 自然对话建档
+
+已更新档案规范、DP 行为规则和 Android 施工验收。当前建档从自然聊天开始，正式量表材料保留历史出处；双账号发布、纠正、撤回与真实模型表现待验收。
