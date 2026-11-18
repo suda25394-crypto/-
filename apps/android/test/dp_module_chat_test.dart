@@ -109,7 +109,9 @@ void main() {
           find.byKey(const Key('cloud-private-input')),
           '想把六点改到七点',
         );
-        await tap('发送');
+        await t.pump();
+        await t.tap(find.byTooltip('发送'));
+        await t.pumpAndSettle();
         expect(find.text('已收到这条记录的请求'), findsOneWidget);
         expect(s.record['body'], '周六晚六点会合');
         await tap('本条草稿（1）');
@@ -128,7 +130,9 @@ void main() {
         expect(find.text('想把六点改到七点'), findsNothing);
         expect(find.text('双方可见 · DP 围绕本条记录回复'), findsOneWidget);
         await t.enterText(find.byType(TextField), '@DP 现在几点？');
-        await tap('发送');
+        await t.pump();
+        await t.tap(find.byTooltip('发送'));
+        await t.pumpAndSettle();
         expect(s.posts.map((p) => p['scope']), ['private', 'shared']);
         expect(t.takeException(), isNull);
       },

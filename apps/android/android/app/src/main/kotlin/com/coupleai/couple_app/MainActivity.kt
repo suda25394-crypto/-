@@ -18,6 +18,7 @@ import java.nio.ByteOrder
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
+    private var wallpaperPick = false
     private var pickResult: MethodChannel.Result? = null
     private var permissionResult: MethodChannel.Result? = null
     private val io = Executors.newSingleThreadExecutor()
@@ -31,6 +32,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
+        WallpaperFiles.register(this, engine.dartExecutor.binaryMessenger, io)
         val mediaChannel = MethodChannel(engine.dartExecutor.binaryMessenger, "couple/device_media")
         mediaChannel.setMethodCallHandler { call, result ->
             try {
@@ -39,6 +41,7 @@ class MainActivity : FlutterActivity() {
                         if (pickResult != null) { result.error("busy","正在选择文件",null); return@setMethodCallHandler }
                         val intent=Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
                         intent.type=if(call.argument<Boolean>("imageOnly")==true) "image/*" else "*/*"
+                        wallpaperPick = call.argument<Boolean>("wallpaper")==true
                         startActivityForResult(intent, 401)
                         pickResult=result
                     }
@@ -94,6 +97,7 @@ class MainActivity : FlutterActivity() {
         if(requestCode!=401) return
         val callback=pickResult ?: return
         pickResult=null
+        val limitMiB = if (wallpaperPick) 24 else 4
         val uri=data?.data
         if(resultCode!=RESULT_OK || uri==null) {callback.success(null);return}
         io.execute {
@@ -108,13 +112,13 @@ class MainActivity : FlutterActivity() {
                     while(true) {
                         val n=input.read(buf)
                         if(n<0) break
-                        require(out.size()+n<=4*1024*1024)
+                        require(out.size()+n<=limitMiB*1024*1024)
                         out.write(buf,0,n)
                     }
                     out.toByteArray()
                 } ?: error("file")
                 runOnUiThread {callback.success(mapOf("name" to name,"mime" to mime,"data" to bytes))}
-            } catch(e:Exception) { runOnUiThread {callback.error("file","无法读取文件，单个附件最多 4 MiB",null)} }
+            } catch(e:Exception) { runOnUiThread {callback.error("file","无法读取文件，最大 ${limitMiB} MiB",null)} }
         }
     }
 

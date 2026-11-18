@@ -90,7 +90,8 @@ void main() {
         find.byKey(const Key('cloud-private-input')),
         '昨天她听我讲完了。',
       );
-      await t.tap(find.text('发送'));
+      await t.pump();
+      await t.tap(find.byTooltip('发送'));
       await t.pumpAndSettle();
       expect(find.text('昨天她听我讲完了。'), findsOneWidget);
       await t.tap(find.text('换个话题'));
@@ -103,7 +104,8 @@ void main() {
       await t.tap(find.text('结束了解'));
       await t.pumpAndSettle();
       await t.enterText(find.byKey(const Key('cloud-private-input')), '今晚吃什么？');
-      await t.tap(find.text('发送'));
+      await t.pump();
+      await t.tap(find.byTooltip('发送'));
       await t.pumpAndSettle();
       expect(s.calls, [
         '/v1/profile-mode/start',

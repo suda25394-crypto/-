@@ -121,7 +121,7 @@ void main() {
       await tap(find.textContaining('我的待处理消息'));
       await tap(find.text('我不喜欢人多'));
       expect(mutations, isEmpty);
-      await tap(find.text('重试'));
+      await tap(find.byTooltip('重试'));
       expect(mutations, ['/v1/messages']);
       await tap(find.text('草稿 1 / 记忆'));
       await tap(find.text('周六约会'));

@@ -80,7 +80,7 @@ class _CoupleClientState extends State<CoupleClient>
       final routeMode = demo != null
           ? 'demo'
           : online
-          ? 'account-${session.user['id']}'
+          ? 'account-${session.endpoint}-${session.user['id']}'
           : 'login';
       Widget page;
       if (loading) {
@@ -123,7 +123,7 @@ class _CoupleClientState extends State<CoupleClient>
       }
       return MaterialApp(
         key: ValueKey(routeMode),
-        title: '两个人',
+        title: '双生宇宙',
         theme: coupleTheme(),
         debugShowCheckedModeBanner: false,
         builder: (_, child) =>

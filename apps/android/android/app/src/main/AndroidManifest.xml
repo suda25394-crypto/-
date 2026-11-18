@@ -4,7 +4,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <application
         android:allowBackup="false"
-        android:label="两个人"
+        android:label="双生宇宙"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -20,9 +20,13 @@ class DeviceMedia {
     );
   }
 
-  static Future<PickedMedia?> pick({bool imageOnly = false}) async {
+  static Future<PickedMedia?> pick({
+    bool imageOnly = false,
+    bool wallpaper = false,
+  }) async {
     final result = await _channel.invokeMapMethod<String, dynamic>('pick', {
       'imageOnly': imageOnly,
+      if (wallpaper) 'wallpaper': true,
     });
     return result == null
         ? null

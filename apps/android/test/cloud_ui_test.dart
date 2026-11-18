@@ -85,24 +85,27 @@ void main() {
         'fixture-only',
       );
       await tap(find.text('登录'));
-      expect(find.textContaining('合成联调'), findsOneWidget);
+      expect(find.text('我们仨'), findsOneWidget);
+      expect(find.byKey(const Key('cloud-shared-input')), findsOneWidget);
       expect(find.text('共同记忆'), findsNothing);
-      await tap(find.byKey(const Key('open-director')));
+      await tap(find.byKey(const Key('open-private')));
       await tester.enterText(
         find.byKey(const Key('cloud-private-input')),
         '只写给我',
       );
-      await tap(find.text('发送'));
+      await tester.pump();
+      await tap(find.byKey(const Key('chat-send')));
       expect(find.text('只写给我'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tap(find.text('共同'));
+      expect(find.text('我们仨'), findsOneWidget);
       expect(find.text('只写给我'), findsNothing);
       await tester.enterText(
         find.byKey(const Key('cloud-shared-input')),
         '共同消息样本',
       );
-      await tap(find.text('发送'));
+      await tester.pump();
+      await tap(find.byKey(const Key('chat-send')));
       expect(find.text('共同消息样本'), findsOneWidget);
       await tap(find.text('功能'));
       await tap(find.byKey(const Key('module-date')));
@@ -114,11 +117,11 @@ void main() {
       expect(find.text('周六散步'), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      await tap(find.text('首页'));
+      await tap(find.byKey(const Key('tab-0')));
       expect(find.text('周六散步'), findsOneWidget);
-      await tap(find.text('档案'));
+      await tap(find.byKey(const Key('tab-3')));
       expect(tester.takeException(), isNull);
-      await tap(find.textContaining('合成联调'));
+      await tap(find.text('登录账号'));
       await tap(find.text('退出登录'));
       expect(find.text('登录私人空间'), findsOneWidget);
       expect(vault.entry, isNull);

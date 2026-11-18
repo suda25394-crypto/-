@@ -1,15 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 
-const paper = Color(0xFFFAF6EC);
-const warmSurface = Color(0xFFFFFCF4);
-const ink = Color(0xFF192E2C);
-const quiet = Color(0xFF53615B);
-const pine = Color(0xFF123F40);
-const mist = Color(0xFFE1E9DF);
-const amber = Color(0xFFA1412A);
-const amberWash = Color(0xFFF5E2CD);
-const purplePaper = Color(0xFFECE8F0);
-const edge = Color(0xFFCCC9B9);
+const paper = Color(0xFFFFFFFF);
+const warmSurface = Color(0xFFFFFFFF);
+const ink = Color(0xFF242328);
+const quiet = Color(0xFF64626B);
+const pine = Color(0xFF6939C7);
+const mist = Color(0xFFF0EBFC);
+const amber = Color(0xFF6035AF);
+const amberWash = Color(0xFFF5F1FC);
+const purplePaper = Color(0xFFF4F1F9);
+const edge = Color(0xFFE9E8EC);
 
 const editionMeta = TextStyle(
   color: quiet,
@@ -37,7 +37,7 @@ ThemeData coupleTheme() {
     onSecondaryContainer: pine,
   );
   const field = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(4)),
+    borderRadius: BorderRadius.all(Radius.circular(12)),
     borderSide: BorderSide(color: edge),
   );
   return ThemeData(
@@ -52,8 +52,7 @@ ThemeData coupleTheme() {
       scrolledUnderElevation: 0,
       titleTextStyle: TextStyle(
         color: ink,
-        fontFamily: 'serif',
-        fontSize: 22,
+        fontSize: 18,
         fontWeight: FontWeight.w700,
       ),
     ),
@@ -69,7 +68,7 @@ ThemeData coupleTheme() {
       border: field,
       enabledBorder: field,
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(4)),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
         borderSide: BorderSide(color: pine, width: 2),
       ),
     ),
@@ -77,7 +76,7 @@ ThemeData coupleTheme() {
       style: FilledButton.styleFrom(
         minimumSize: const Size(48, 48),
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(4)),
+          borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
     ),
