@@ -82,6 +82,6 @@
 
 状态标记：✅ 用户确认的方向｜🧪 已有可检查的演示文件｜💡 待验证的设计｜⏳ 尚未实现。不要把创意、源码、上线和验收混淆。
 
-## 当前施工任务（2026-11-18，D-41）
+## 当前施工任务（2026-11-18，D-55）
 
-[Android 私人 Demo 功能交付](planning/ANDROID_FUNCTIONAL_DEMO.md)｜本机已有可运行客户端与调试 APK，当前由 Codex 接通真实模型、账号、云端业务与双人同步。视觉与用户并行讨论，用户选稿后另行实施。详见[最新进度](planning/PROGRESS.md)。
+Codex 依照用户暂定的[白紫简约交互稿](prototype/white-purple-review/index.html)，把现有 Flutter Android 私用 Demo 接上真实双人流程，出包后核对公网和两部手机。入口见[今晚 Android 执行与验收任务](planning/CODEX_ANDROID_TONIGHT.md)、[最新部署与验收进度](planning/PROGRESS.md)和[原有功能任务书](planning/ANDROID_FUNCTIONAL_DEMO.md)。
