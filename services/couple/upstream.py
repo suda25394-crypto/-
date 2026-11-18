@@ -30,6 +30,11 @@ activity_experiences 是所列个人的实际反馈，仅在适用场景参考�
 只提出合适的项目，计划最多4项。无待确认计划或记忆时用空数组。"""
 
 
+def conversation_prompt():
+    from .profile_mode import MODE_INSTRUCTION
+    rules=(Path(__file__).resolve().parents[2]/"prompts"/"dp-relationship.zh-CN.md").read_text(encoding="utf-8")
+    return rules+"\n"+SYSTEM+"\n"+MODE_INSTRUCTION+"\n一般问答直接用 reply 回答并保留举例，items 和 memories 为空。intent=choose_plan 时请用户打开唯一目标后再改。复盘内容仅在明确授权的共同复盘中参考；禁止在对话中代替任何人启动、同意或把复盘写成共同约定。"
+
 class UpstreamError(Exception):
     def __init__(self, code: str, message: str, status: int):
         super().__init__(code)
@@ -143,7 +148,7 @@ class Upstream:
                 transport=self.transport,
                 trust_env=False,
                 follow_redirects=False,
-                timeout=httpx.Timeout(50 if operation == "model" else 8, connect=4),
+                timeout=httpx.Timeout(110 if operation == "tool" else 50 if operation == "model" else 8, connect=4),
             ) as client:
                 response = client.request(
                     method, origin + path, headers=headers, content=body
@@ -153,7 +158,7 @@ class Upstream:
                 "upstream_timeout", "连接超时，请核对请求状态后重试。", 504
             ) from None
         except httpx.RequestError as exc:
-            if operation == "model" and not isinstance(exc, httpx.ConnectError):
+            if operation in {"model","tool"} and not isinstance(exc, httpx.ConnectError):
                 raise UpstreamError(
                     "model_outcome_unknown",
                     "模型响应中断，无法确认调用结果，请先刷新。",
@@ -171,11 +176,17 @@ class Upstream:
             raise UpstreamError(
                 "invalid_credentials", "登录失败，请核对账号、密码及登录方式。", 401
             )
-        if operation == "model":
+        if operation in {"model","tool"}:
             try:
                 error = response.json().get("error", {}).get("code")
             except (AttributeError, TypeError, ValueError, RecursionError):
                 error = None
+            if error == "content_filter":
+                raise UpstreamError("content_filter", "内容审核未通过，本次没有发布或写入。", 422)
+            if error=="multistep_budget_blocked":
+                raise UpstreamError(error,"当前额度下无法限制这项内置检索的整轮输出。可使用网页搜索或阅读链接。",503)
+            if error in ("invalid_tool","tool_incomplete","tool_quota_after_upload","tool_quota_after_source","tool_meter_unknown"):
+                raise UpstreamError(error, "工具没有返回完整结果，请先检查用量。", 502)
             if error == "upstream_disabled":
                 raise UpstreamError(
                     "upstream_disabled", "真实模型尚未启用，请联系维护者。", 503
@@ -206,6 +217,13 @@ class Upstream:
         raise UpstreamError(
             "upstream_unavailable", "上游服务暂不可用，请稍后重试。", 503
         )
+
+    def official_tool(self, token, operation, payload):
+        models = self._web("GET", "/api/models", token)
+        if not isinstance(models, dict) or not isinstance(models.get("data"),list) or not any(isinstance(m,dict) and m.get("id")==MODEL for m in models["data"]):
+            raise UpstreamError("model_access", "该账号没有使用此模型的权限。", 403)
+        return self._request("POST",self.config.gateway,"/v1/couple-tools/"+operation,
+                             self.config.gateway_token,{**payload,"output_limit":self.config.max_tokens},"tool")
 
     def _web(self, method, path, token=None, payload=None, operation="read"):
         return self._request(method, self.config.webui, path, token, payload, operation)
@@ -519,6 +537,7 @@ class Upstream:
             k: list(context.get(k, []))
             for k in (
                 "speaker",
+                "intent","reflections","profile_mode",
                 "module_target",
                 "profiles",
                 "memories",
@@ -543,7 +562,7 @@ class Upstream:
                 "stream": False,
                 "max_tokens": self.config.max_tokens,
                 "messages": [
-                    {"role": "system", "content": SYSTEM},
+                    {"role": "system", "content": conversation_prompt()},
                     {"role": "user", "content": _compact(data)},
                 ],
             }
@@ -555,6 +574,7 @@ class Upstream:
             "history",
             "profiles",
             "conversation",
+            "reflections",
             "activity_decisions",
             "activity_experiences",
             "mandates",
@@ -597,6 +617,7 @@ class Upstream:
             return {
                 **data,
                 "memories": data["memories"] if scope == "private" else [],
+                "reported_model": result.get("model") if isinstance(result.get("model"),str) else None,
                 "usage": usage,
             }
         except (

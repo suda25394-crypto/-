@@ -19,7 +19,7 @@ def copy_db(source: Path, target: Path, *, for_restore=False):
             if src.execute("pragma quick_check").fetchone()!=("ok",):
                 raise ValueError("Source failed integrity check")
             version=src.execute("pragma user_version").fetchone()[0]
-            if version not in (1,2): raise ValueError("This release expects schema 1 or 2")
+            if version not in (1,2,3): raise ValueError("This release expects schema 1, 2 or 3")
             if not src.execute("select count(*) from couples").fetchone()[0]:
                 raise ValueError("Not an initialized product database")
             src.backup(dst)

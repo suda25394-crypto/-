@@ -9,12 +9,14 @@ from datetime import datetime, timezone, timedelta
 
 from .business import (
     Failure,
+    missing,
     check_version,
     check_target_items,
     clean_completion,
     read_epoch,
 )
 from .dp_recall import index_turn
+from . import profile_mode, intent
 from .database import encode
 from .upstream import UpstreamError
 
@@ -53,6 +55,22 @@ class Conversations:
                 )
         return result
 
+    def receipt(self, a, req):
+        key = hashlib.sha256(encode((a.pair, a.id, req)).encode()).hexdigest()
+        with self.db.connection() as c:
+            info = c.execute(
+                """SELECT u.outcome,u.in_tokens,u.out_tokens,r.at,r.reported_model
+                     FROM usage u LEFT JOIN model_receipts r ON r.usage_id=u.id WHERE pair=? AND request_id=?
+                     ORDER BY u.id DESC LIMIT 1""",
+                (a.pair, key),
+            ).fetchone()
+        return {
+            "called": bool(info),
+            "mode": self.db.settings.mode,
+            "requested_model": "deepseek-flash" if info else None,
+            **(dict(info) if info else {}),
+        }
+
     def send(self, a, req, scope, text, module_id=None, module_version=None):
         key = (a.pair, a.id, req)
         condition = "pair=? AND owner=? AND request_id=?"
@@ -60,8 +78,8 @@ class Conversations:
         remote_id = hashlib.sha256(encode(key).encode()).hexdigest()
         now = int(time.time())
         lease = secrets.token_hex(12)
-        with self.db.connection(True) as c:
-            c.execute(
+        with self.records.release_lock, self.db.connection(True) as c:
+            inserted = c.execute(
                 "INSERT OR IGNORE INTO chats(pair,owner,request_id,scope,input,at,module_id,module_version) VALUES(?,?,?,?,?,?,?,?)",
                 (*key, scope, text, now, module_id, module_version),
             )
@@ -75,9 +93,49 @@ class Conversations:
                 raise Failure(409, "request_mismatch", "同一提交编号已用于其他内容。")
             if row["done"]:
                 return
-            target = self.records.module(c, a, module_id) if module_id else None
-            if target:
-                check_version(target["version"], module_version)
+            task = row["intent"] or intent.route(text, module_id)
+            if (
+                task == "general"
+                and not intent.knowledge_request(text)
+                and profile_mode.personal_statement(text)
+            ):
+                task = "personal"
+            if inserted.rowcount:
+                implicit = (
+                    intent.select_plan(c, a, text, req)
+                    if task == "product"
+                    and not module_id
+                    and (scope == "private" or MENTION.search(text))
+                    else None
+                )
+                c.execute(
+                    "UPDATE chats SET intent=?,bound_id=?,bound_version=? WHERE "
+                    + condition,
+                    (
+                        task,
+                        implicit["id"] if implicit else None,
+                        implicit["version"] if implicit else None,
+                        *key,
+                    ),
+                )
+                row = c.execute(
+                    "SELECT * FROM chats WHERE " + condition, key
+                ).fetchone()
+            target_key = module_id or row["bound_id"]
+            expected = module_version if module_id else row["bound_version"]
+            target = None
+            if target_key:
+                if task == "product":
+                    target = self.records.module(c, a, target_key)
+                    check_version(target["version"], expected)
+                else:
+                    header = c.execute(
+                        "SELECT version FROM modules WHERE id=? AND pair=?",
+                        (target_key, a.pair),
+                    ).fetchone()
+                    if not header:
+                        missing()
+                    check_version(header["version"], expected)
             if row["busy_until"] > now:
                 raise Failure(409, "in_progress", "正在处理这条消息，稍后刷新。")
             if row["uncertain"] and not row["output"]:
@@ -86,6 +144,15 @@ class Conversations:
                     "model_outcome_unknown",
                     "上次模型调用结果不明。此次重试不会再次扣用量；如仍需回复，请主动发起新请求。",
                 )
+            if inserted.rowcount:
+                profile_mode.attach_turn(c, a, row)
+            if (
+                inserted.rowcount
+                and not module_id
+                and scope == "private"
+                and profile_mode.handle_private(c, a, row)
+            ):
+                return
             c.execute(
                 "UPDATE chats SET busy_until=?,lease=? WHERE " + condition,
                 (now + 240, lease, *key),
@@ -118,10 +185,31 @@ class Conversations:
                     generation_epoch = read_epoch(c, a)
                     if target:
                         check_version(
-                            self.records.module(c, a, module_id)["version"],
-                            module_version,
+                            self.records.module(c, a, target_key)["version"],
+                            expected,
                         )
-                    context = self.records.context(c, a, scope, text, target)
+                    context = (
+                        self.records.context(c, a, scope, text, target)
+                        if task == "product"
+                        else intent.conversational_context(c, a, scope, module_id, task)
+                    )
+                    context["intent"] = [task]
+                    ambiguous = (
+                        task == "product"
+                        and not target
+                        and intent.EDIT.search(text)
+                        and intent.PLAN.search(text)
+                    )
+                    if ambiguous:
+                        context["intent"] = ["choose_plan"]
+                    guided = None
+                    if task not in (
+                        "safety",
+                        "relationship",
+                    ) and not intent.knowledge_request(text):
+                        guided = profile_mode.mode_context(c, a, row, generation_epoch)
+                    if guided:
+                        context["profile_mode"] = [guided]
                     day = datetime.now(BEIJING).date().isoformat()
                     count = c.execute(
                         "SELECT count(*) FROM usage WHERE pair=? AND day=? AND outcome!='rejected'",
@@ -145,6 +233,7 @@ class Conversations:
                         "upstream_timeout",
                         "gateway_timeout",
                         "model_format",
+                        "content_filter",
                     )
                     safe_rejection = e.status in (
                         400,
@@ -159,6 +248,8 @@ class Conversations:
                         "gateway_disabled",
                         "upstream_disabled",
                     )
+                    if e.code == "content_filter":
+                        safe_rejection = False
                     with self.db.connection(True) as c:
                         c.execute(
                             "UPDATE usage SET outcome=? WHERE id=?",
@@ -167,6 +258,17 @@ class Conversations:
                         change(c, "uncertain=?", int(unknown))
                     raise
                 with self.db.connection(True) as c:
+                    reported = (
+                        raw.get("reported_model") if isinstance(raw, dict) else None
+                    )
+                    c.execute(
+                        "INSERT OR IGNORE INTO model_receipts VALUES(?,?,?)",
+                        (
+                            usage_id,
+                            int(time.time()),
+                            reported[:100] if isinstance(reported, str) else None,
+                        ),
+                    )
                     usage = raw.get("usage") if isinstance(raw, dict) else {}
                     usage = usage if isinstance(usage, dict) else {}
 
@@ -182,7 +284,19 @@ class Conversations:
                             usage_id,
                         ),
                     )
+                if isinstance(raw, dict) and (task != "product" or ambiguous):
+                    raw = raw | {"items": []}
+                    if task != "personal":
+                        raw = raw | {"memories": []}
                 result = clean_completion(raw)
+                if module_id:
+                    result["memories"] = []
+                if (
+                    scope == "private"
+                    and not module_id
+                    and task not in ("general", "relationship", "safety")
+                ):
+                    profile_mode.prepare_reply(text, result)
                 if target:
                     check_target_items(target, result["items"])
                 with self.db.connection(True) as c:
@@ -219,6 +333,8 @@ class Conversations:
                 with self.db.connection(True) as c:
                     change(c, "done=1")
                     self.records.materialize(c, a, req, scope, result, target)
+                    if not module_id and scope == "private":
+                        profile_mode.after_reply(c, a, row, result)
                     index_turn(c, *key, text)
         finally:
             with self.db.connection(True) as c:

@@ -12,9 +12,11 @@ class HomeScreen extends StatefulWidget {
     required this.openModule,
     required this.openDirector,
     this.summaries,
+    this.today,
     super.key,
   });
 
+  final Widget? today;
   final List<ModuleId> suggestions;
   final ValueChanged<ModuleId> openModule;
   final VoidCallback openDirector;
@@ -79,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.today != null) widget.today!,
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

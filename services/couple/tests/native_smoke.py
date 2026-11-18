@@ -156,7 +156,8 @@ def run(web_py, gateway_py):
         ExitStack() as stack,
     ):
         cwd = Path(temp)
-        (cwd / "gateway.py").write_bytes(from_git("gateway.py"))
+        for source in ("gateway.py", "app_tools.py"):
+            (cwd / source).write_bytes((project / "deploy" / "gateway" / source).read_bytes())
         (cwd / "fixture_gateway.py").write_bytes(
             (Path(__file__).parent / "fixture_gateway.py").read_bytes()
         )

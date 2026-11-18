@@ -1,8 +1,12 @@
+import 'official_tools.dart';
+import 'reflections.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../services/cloud_session.dart';
 import 'theme.dart';
 import 'dp_mandates.dart';
+import 'profile_mode.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.session, required this.onDemo, super.key});
@@ -189,6 +193,7 @@ class CloudChat extends StatefulWidget {
 class _CloudChatState extends State<CloudChat> {
   final _input = TextEditingController();
   bool _sending = false;
+  Json? _receipt;
   String? _key, _failedText, _error;
   bool _unknown = false;
   bool get _shared => widget.scope == 'shared';
@@ -204,11 +209,14 @@ class _CloudChatState extends State<CloudChat> {
       if (widget.sendInModule case final send?) {
         await send(text, _key!);
       } else {
-        await widget.session.mutate('POST', '/v1/messages', {
+        final posted = await widget.session.mutate('POST', '/v1/messages', {
           'scope': widget.scope,
           'text': text,
           'request_id': _key,
         });
+        _receipt = posted is Json && posted['receipt'] is Json
+            ? posted['receipt']
+            : null;
       }
       if (!mounted) return;
       _input.clear();
@@ -335,6 +343,8 @@ class _CloudChatState extends State<CloudChat> {
         top: false,
         child: Column(
           children: [
+            if (!_shared && widget.moduleId == null)
+              PrivateProfileMode(session: widget.session, sending: _sending),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
@@ -348,6 +358,71 @@ class _CloudChatState extends State<CloudChat> {
                           : '仅自己可见 · 发给 DP',
                       style: editionMeta,
                     ),
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'DP 工具与协作',
+                    onSelected: (choice) async {
+                      if (choice == 'receipt') {
+                        final r = _receipt!;
+                        await showDialog<void>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            title: const Text('最近一次发送回执'),
+                            content: SelectableText(
+                              r['called'] != true
+                                  ? '服务端未发起模型调用。'
+                                  : '模式 ${r['mode']}\n请求模型 ${r['requested_model']}\n上游报告 ${r['reported_model'] ?? "未提供"}\n时间 ${r['at'] == null ? "未知" : DateTime.fromMillisecondsSinceEpoch(r['at'] * 1000).toLocal()}\n状态 ${r['outcome']}\n输入 ${r['in_tokens'] ?? "未知"} · 输出 ${r['out_tokens'] ?? "未知"} tokens',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c),
+                                child: const Text('关闭'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else if (choice == 'review') {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                Reflections(session: widget.session),
+                          ),
+                        );
+                      } else {
+                        final draft = await Navigator.push<String>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OfficialTools(
+                              session: widget.session,
+                              scope: widget.scope,
+                              moduleId: widget.moduleId,
+                            ),
+                          ),
+                        );
+                        if (mounted && draft != null) {
+                          _input.value = TextEditingValue(
+                            text: draft,
+                            selection: TextSelection.collapsed(
+                              offset: draft.length,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (_receipt != null)
+                        const PopupMenuItem(
+                          value: 'receipt',
+                          child: Text('调用回执'),
+                        ),
+                      const PopupMenuItem(value: 'tools', child: Text('DP 工具')),
+                      if (_shared && thread == null)
+                        const PopupMenuItem(
+                          value: 'review',
+                          child: Text('共同复盘'),
+                        ),
+                    ],
                   ),
                   if (_shared && thread == null)
                     MandateInboxButton(session: widget.session),

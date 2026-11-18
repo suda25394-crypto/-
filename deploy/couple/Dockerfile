@@ -5,6 +5,7 @@ COPY deploy/couple/requirements.lock /tmp/requirements.lock
 RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r /tmp/requirements.lock \
     && groupadd -g 10001 couple && useradd -u 10001 -g couple --no-create-home couple \
     && install -d -m 0700 -o couple -g couple /data
+COPY prompts/dp-relationship.zh-CN.md /app/prompts/dp-relationship.zh-CN.md
 COPY services/couple/*.py /app/services/couple/
 COPY deploy/couple/data_tool.py /app/data_tool.py
 USER 10001:10001

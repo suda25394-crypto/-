@@ -79,11 +79,23 @@ class CloudSession extends ChangeNotifier {
     if (!_closed) notifyListeners();
   }
 
+  Future<void> _checkServiceVersion() async {
+    final health = await request('GET', '/v1/health');
+    if (health is! Json || health['ok'] != true || health['schema'] != 3) {
+      throw const CloudError(
+        '这个地址还没有匹配的产品服务。请使用 Muse 为 0.4 测试版核准的 HTTPS 地址。',
+        409,
+        'service_version',
+      );
+    }
+  }
+
   Future<void> restore() async {
     final raw = await vault.read();
     if (raw == null) return;
     final data = jsonDecode(raw) as Json;
     endpoint = serviceUri(data['endpoint'] as String).toString();
+    await _checkServiceVersion();
     _token = data['token'] as String;
     if (_token.isEmpty) return;
     await refresh();
@@ -93,6 +105,7 @@ class CloudSession extends ChangeNotifier {
   Future<void> login(String address, String email, String password) async {
     if (signedIn) throw const CloudError('请先退出当前会话。');
     endpoint = serviceUri(address).toString();
+    await _checkServiceVersion();
     final value = await request('POST', '/v1/login', {
       'email': email.trim(),
       'password': password,
@@ -131,6 +144,8 @@ class CloudSession extends ChangeNotifier {
         method == 'POST' &&
         (path == '/v1/messages' ||
             path == '/v1/games' ||
+            path == '/v1/ai/tools' ||
+            path == '/v1/ai/attachments' ||
             path.endsWith('/conversation'));
     late final http.Response response;
     try {

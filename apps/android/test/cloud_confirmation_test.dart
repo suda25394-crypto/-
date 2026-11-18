@@ -65,6 +65,9 @@ void main() {
       final session = CloudSession(
         vault: vault,
         client: MockClient((r) async {
+          if (r.url.path == '/v1/health') {
+            return http.Response('{"ok":true,"schema":3}', 200);
+          }
           if (r.method == 'GET') {
             return http.Response.bytes(utf8.encode(jsonEncode(state)), 200);
           }

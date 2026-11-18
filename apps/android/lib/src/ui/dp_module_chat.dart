@@ -5,6 +5,7 @@ import '../services/cloud_session.dart';
 import 'cloud_chat.dart';
 import 'cloud_records.dart';
 import 'dp_activity.dart';
+import 'daily_life.dart';
 import 'theme.dart';
 
 class CloudModuleDetail extends StatelessWidget {
@@ -91,6 +92,7 @@ class CloudModuleDetail extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Divider(),
+            DailyLifeDetails(session: session, record: record),
             ActivityActions(session: session, record: record),
           ],
         ),

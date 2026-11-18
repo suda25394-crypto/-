@@ -1,3 +1,5 @@
+import 'ui/daily_life.dart';
+
 import 'package:material_ui/material_ui.dart';
 
 import 'data/catalog.dart';
@@ -243,6 +245,7 @@ class _AppShellState extends State<AppShell> {
               index: tab,
               children: [
                 HomeScreen(
+                  today: s == null ? null : DailyLifeHome(session: s),
                   suggestions: s == null
                       ? suggestions
                       : onlineTitles.keys.take(3).toList(),
@@ -284,7 +287,10 @@ class _AppShellState extends State<AppShell> {
                       ),
                 s == null
                     ? const ProfilesScreen()
-                    : CloudProfilesScreen(session: s),
+                    : CloudProfilesScreen(
+                        session: s,
+                        openPrivateChat: openDirector,
+                      ),
               ],
             ),
           ),

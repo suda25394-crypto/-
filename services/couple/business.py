@@ -9,6 +9,7 @@ from threading import RLock
 from dataclasses import dataclass
 
 from .database import encode
+from .daily_portrait import forget_portrait
 from .profile_schema import public_projection, validate_profile
 from . import dp_recall
 
@@ -272,38 +273,44 @@ class Records:
                     (a.pair, a.id),
                 )
             else:
-                if not row:
+                cleared = forget_portrait(c, a.pair, a.id)
+                if not row and not cleared:
                     missing()
-                # Keep a version tombstone so a delayed offline update cannot recreate deleted content.
+                # A delayed offline edit cannot recreate the old profile.
                 c.execute(
-                    "UPDATE profiles SET version=version+1,released=NULL,draft='{}' WHERE pair=? AND owner=?",
-                    (a.pair, a.id),
+                    """INSERT INTO profiles(pair,owner,version,draft,released) VALUES(?,?,?,'{}',NULL)
+                       ON CONFLICT(pair,owner) DO UPDATE SET version=excluded.version,released=NULL,draft='{}'""",
+                    (a.pair, a.id, version + 1),
                 )
             bump_epoch(c, a)
 
     def memory_write(self, a, key, version, value=None, scope=None):
         with self.release_lock, self.db.connection(True) as c:
-            row = c.execute(
-                "SELECT * FROM memories WHERE pair=? AND id=? AND owner=?",
-                (a.pair, key, a.id),
-            ).fetchone()
-            if not row:
-                missing()
-            check_version(row["version"], version)
-            if value is None:
-                c.execute("DELETE FROM memories WHERE pair=? AND id=?", (a.pair, key))
-            else:
-                if scope not in ("private", "shared"):
-                    invalid()
-                value = text_value(value, 300)
-                dp_recall.remember(c, row, value, scope)
-                c.execute(
-                    "UPDATE memories SET version=version+1,scope=?,text=? WHERE pair=? AND id=?",
-                    (scope, value, a.pair, key),
-                )
-            bump_epoch(
-                c, a, invalidate_history=value is None or row["scope"] != "candidate"
+            self.change_memory(c, a, key, version, value, scope)
+
+    @staticmethod
+    def change_memory(c, a, key, version, value=None, scope=None):
+        row = c.execute(
+            "SELECT * FROM memories WHERE pair=? AND id=? AND owner=?",
+            (a.pair, key, a.id),
+        ).fetchone()
+        if not row:
+            missing()
+        check_version(row["version"], version)
+        if value is None:
+            c.execute("DELETE FROM memories WHERE pair=? AND id=?", (a.pair, key))
+        else:
+            if scope not in ("private", "shared"):
+                invalid()
+            value = text_value(value, 300)
+            dp_recall.remember(c, row, value, scope)
+            c.execute(
+                "UPDATE memories SET version=version+1,scope=?,text=? WHERE pair=? AND id=?",
+                (scope, value, a.pair, key),
             )
+        bump_epoch(
+            c, a, invalidate_history=value is None or row["scope"] != "candidate"
+        )
 
     def manual_module(self, a, req, kind, title, body):
         item = clean_items([{"module": kind, "title": title, "body": body}])[0]
@@ -349,16 +356,15 @@ class Records:
 
     def module_write(self, a, key, version, title, body):
         with self.release_lock, self.db.connection(True) as c:
-            row = c.execute(
-                "SELECT version FROM modules WHERE pair=? AND id=?", (a.pair, key)
-            ).fetchone()
-            if not row:
-                missing()
+            row = self.module(c,a,key)
             check_version(row["version"], version)
+            title,body=text_value(title,120),text_value(body,2500)
             c.execute(
                 "UPDATE modules SET version=version+1,title=?,body=? WHERE pair=? AND id=?",
-                (text_value(title, 120), text_value(body, 2500), a.pair, key),
+                (title, body, a.pair, key),
             )
+            from .daily_life import content_edit
+            content_edit(c,a,row,title,body)
             bump_epoch(c, a)
 
     def resolve_draft(self, a, key, version, items, action):
@@ -396,6 +402,8 @@ class Records:
                         WHERE pair=? AND id=?""",
                         (patch["title"], patch["body"], a.pair, target["id"]),
                     )
+                    from .daily_life import content_edit
+                    content_edit(c,a,target,patch["title"],patch["body"])
                 else:
                     for i, item in enumerate(chosen):
                         c.execute(

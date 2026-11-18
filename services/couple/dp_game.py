@@ -313,6 +313,8 @@ def generate(s, a, form):
                 "upstream_disabled",
             )
         )
+        if e.code=="content_filter":
+            rejected=False
         deterministic = e.code in (
             "model_format",
             "game_format",

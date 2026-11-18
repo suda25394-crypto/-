@@ -1,7 +1,7 @@
 name: couple_app
 description: 情侣 AI Android 本地开发预览
 publish_to: none
-version: 0.3.0+3
+version: 0.4.0+4
 
 environment:
   sdk: ^3.14.0

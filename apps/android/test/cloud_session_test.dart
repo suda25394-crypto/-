@@ -16,6 +16,30 @@ class MemoryVault extends SessionVault {
 }
 
 void main() {
+  test(
+    'old service is identified before sending account credentials',
+    () async {
+      final paths = <String>[];
+      final session = CloudSession(
+        vault: MemoryVault(),
+        client: MockClient((req) async {
+          paths.add(req.url.path);
+          expect(req.body, isEmpty);
+          expect(req.headers.containsKey('authorization'), isFalse);
+          return http.Response('{"ok":true,"schema":1}', 200);
+        }),
+      );
+      addTearDown(session.dispose);
+      await expectLater(
+        session.login('https://fixture.test', 'a@example.test', 'fixture-only'),
+        throwsA(
+          isA<CloudError>().having((e) => e.code, 'code', 'service_version'),
+        ),
+      );
+      expect(paths, ['/v1/health']);
+    },
+  );
+
   test('rejects unprotected public origins, credentials and query tokens', () {
     for (final raw in [
       'http://my-server.test',
@@ -39,6 +63,9 @@ void main() {
       final session = CloudSession(
         vault: vault,
         client: MockClient((req) async {
+          if (req.url.path == '/v1/health') {
+            return http.Response('{"ok":true,"schema":3}', 200);
+          }
           if (req.url.path == '/v1/login') {
             return http.Response(
               jsonEncode({'token': 'test-only-session'}),

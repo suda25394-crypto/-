@@ -79,6 +79,18 @@ class FixtureUpstream:
             self.fail_after_post = False
             raise UpstreamError("delivery_unknown", "请刷新对账", 503)
 
+    def official_tool(self, token, kind, payload):
+        from .official_fixture import Provider, through_gateway
+
+        self.uid(token)
+        if self.disabled:
+            raise UpstreamError("model_disabled", "合成工具已关闭", 503)
+        with self.lock:
+            if not hasattr(self, "tool_provider"):
+                self.tool_provider = Provider()
+            provider = self.tool_provider
+        return through_gateway(Path(self.path).parent, provider, kind, payload)
+
     def generate_game(self, token, sources):
         self.uid(token)
         if self.disabled:
@@ -162,9 +174,7 @@ class FixtureUpstream:
                 (m for m in context["memories"] if m.get("category") == "usual"), None
             )
             if budget:
-                reply = (
-                    f"{budget['owner']}：{budget['quote']}（记录时间 {budget['source_time']}）"
-                )
+                reply = f"{budget['owner']}：{budget['quote']}（记录时间 {budget['source_time']}）"
         if context.get("module_target"):
             target = context["module_target"][0]
             items = []
@@ -179,6 +189,40 @@ class FixtureUpstream:
                 + "」"
                 + ("，已拟好修改草稿" if items else "")
             )
+        purpose = (context.get("intent") or ["product"])[0]
+        if purpose == "general":
+            if "そうだ" in text and "ようだ" in text:
+                reply = "传闻用「普通形＋そうだ」（雨が降るそうだ）；根据眼前线索推断可用「ようだ」（雨が降ったようだ）。另有表示看起来的「降りそうだ」。"
+            elif "刚才" in text and "鼓励" in text:
+                taught = any(
+                    "ようだ" in turn["text"] and turn["role"] == "assistant"
+                    for turn in context["conversation"]
+                )
+                reply = (
+                    "少しずつ自信がついてきたようだね。応援しているよ。"
+                    if taught
+                    else "想用刚才哪个句型？"
+                )
+        elif purpose == "safety":
+            reply = "你现在方便安全地说话吗？你可以先联系信任的人，由你决定下一步。"
+        elif purpose == "relationship":
+            if any(w in text for w in ("依恋", "截图", "回避型")):
+                reply = "单凭截图无法判断对方的依恋类型。你想讨论截图里的哪件具体事情？"
+            elif any(w in text for w in ("说重了", "道歉")):
+                reply = "可以先私下拟一句：刚才我说重了，对不起。那件事对我仍然重要，我想等我们都准备好，再一起谈清楚。"
+            elif any(w in text for w in ("好消息", "录取", "升职")):
+                reply = "真为你高兴！这件好消息里，最让你开心的是哪一刻？"
+            elif any(w in text for w in ("离开", "分手")):
+                reply = "这个决定由你自己作主。如果需要，我们可以一起想想怎么表达边界。"
+            else:
+                reply = (
+                    "可以分别说说自己的意思。两个人都愿意时才一起复盘，也可以随时退出。"
+                )
+        elif purpose == "choose_plan":
+            reply = "请先打开你想修改的那一份计划。"
+        if context.get("profile_mode") and purpose not in ("relationship", "safety"):
+            cue = context["profile_mode"][0]["question"]
+            reply = "谢谢你告诉我。" + cue["follow_up"]
         if self.bad_output:
             items = [{"module": "outside", "title": "非法", "body": "非法"}]
         return {

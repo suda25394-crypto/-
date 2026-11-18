@@ -1,5 +1,7 @@
 # 情侣 AI 生态｜AI 主导的情侣超级 App（产品名待定）
 
+Android 私人 Demo **0.4.0+4** 的[测试 APK 及校验值](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4)、[按 D 编号的验收结果](planning/ANDROID_0_4_RECEIPT.md)和 [Muse 部署交接](deploy/couple/MUSE_0_4.md)在此开发分支。
+
 规划与 Android 开发进度见[双边交接页](planning/ANDROID_PLANNING_HANDOFF.md)，其中列出了已验收功能、可安装测试包、Muse 基线和后续任务。
 
 > **项目本体：AI 主导的情侣超级 App。**  

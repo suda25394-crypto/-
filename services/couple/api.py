@@ -17,7 +17,8 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from .business import Actor, Failure, Records, invalid, text_value
 from .conversations import Conversations
-from . import dp_activity, dp_mandates, dp_game
+from . import relationship, daily_life, dp_tools
+from . import dp_activity, dp_mandates, dp_game, profile_mode, daily_portrait
 from .database import Database, Settings, SCHEMA_VERSION
 from .upstream import Upstream, UpstreamError
 
@@ -42,13 +43,21 @@ class BodyLimit:
             return
         parts = []
         length = 0
+        path = scope.get("path", "")
+        limit = (
+            6 * 1024 * 1024
+            if path == "/v1/ai/attachments"
+            else 550000
+            if re.fullmatch(r"/v1/modules/[^/]+/life/remember", path)
+            else 32768
+        )
         while True:
             chunk = await receive()
             if chunk["type"] == "http.disconnect":
                 return
             data = chunk.get("body", b"")
             length += len(data)
-            if length > 32768:
+            if length > limit:
                 await failure(413, "body_limit", "提交内容过长。")(scope, receive, send)
                 return
             parts.append(data)
@@ -132,7 +141,8 @@ def create_app(settings=None, upstream=None):
         )
         app.state.chat = Conversations(db, records, client)
         try:
-            yield
+            async with daily_portrait.scheduler(db):
+                yield
         finally:
             if upstream is None and hasattr(client, "close"):
                 client.close()
@@ -189,7 +199,9 @@ def create_app(settings=None, upstream=None):
         return principal(request)
 
     A = Depends(actor)
-    for feature in (dp_activity, dp_mandates, dp_game):
+    for feature in (relationship, daily_life, dp_tools):
+        feature.register(api, actor)
+    for feature in (dp_activity, dp_mandates, dp_game, profile_mode):
         feature.register(api, actor)
 
     @api.get("/v1/health")
@@ -199,6 +211,7 @@ def create_app(settings=None, upstream=None):
         return {
             "ok": True,
             "schema": SCHEMA_VERSION,
+            "version": "0.4.0+4",
             "mode": request.app.state.settings.mode,
         }
 
@@ -271,6 +284,9 @@ def create_app(settings=None, upstream=None):
                 "user": {"id": a.id, "name": a.name},
                 "paired": True,
                 "mode": s.settings.mode,
+                **profile_mode.state(c, a),
+                **relationship.state(c, a),
+                **daily_life.state(c, a),
                 **dp_activity.state(c, a),
                 **dp_mandates.state(c, a),
                 **dp_game.state(c, a),
@@ -303,7 +319,10 @@ def create_app(settings=None, upstream=None):
         request.app.state.chat.send(
             a, form.request_id, form.scope, text_value(form.text, 2000)
         )
-        return {"ok": True}
+        return {
+            "ok": True,
+            "receipt": request.app.state.chat.receipt(a, form.request_id),
+        }
 
     @api.put("/v1/profile")
     def set_profile(form: Profile, request: Request, a: Actor = A):

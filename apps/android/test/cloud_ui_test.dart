@@ -25,7 +25,9 @@ void main() {
         client: MockClient((req) async {
           dynamic result;
           final path = req.url.path;
-          if (path == '/v1/login') {
+          if (path == '/v1/health') {
+            result = {'ok': true, 'schema': 3};
+          } else if (path == '/v1/login') {
             result = {'token': 'session-fixture'};
           } else if (path == '/v1/state') {
             result = {

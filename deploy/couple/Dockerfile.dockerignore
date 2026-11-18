@@ -7,3 +7,6 @@
 !deploy/couple/Dockerfile
 !deploy/couple/requirements.lock
 !deploy/couple/data_tool.py
+
+!prompts/
+!prompts/dp-relationship.zh-CN.md

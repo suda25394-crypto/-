@@ -12,7 +12,7 @@ from unittest.mock import patch
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from ..database import SCHEMA, Settings, encode
+from ..database import SCHEMA_VERSION, SCHEMA, Settings, encode
 from .fixture import FixtureUpstream, fixture_app
 
 
@@ -383,7 +383,7 @@ class UpgradeTests(unittest.TestCase):
                 self.assertEqual(restored["mandates"], [])
                 self.assertFalse(provider.contexts)
             with sqlite3.connect(db) as c:
-                self.assertEqual(c.execute("PRAGMA user_version").fetchone()[0], 2)
+                self.assertEqual(c.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION)
                 self.assertEqual(c.execute("PRAGMA foreign_key_check").fetchall(), [])
                 for table, row in data.items():
                     self.assertEqual(

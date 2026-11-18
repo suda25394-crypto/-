@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data/profile_questionnaire.dart';
 import '../services/cloud_session.dart';
+import 'cloud_records.dart' show MemoryEditor;
 import 'theme.dart';
 
 Map<String, dynamic> _map(dynamic value) =>
@@ -36,8 +37,13 @@ Future<bool> _confirm(
 }
 
 class CloudProfilesScreen extends StatefulWidget {
-  const CloudProfilesScreen({required this.session, super.key});
+  const CloudProfilesScreen({
+    required this.session,
+    this.openPrivateChat,
+    super.key,
+  });
   final CloudSession session;
+  final VoidCallback? openPrivateChat;
   @override
   State<CloudProfilesScreen> createState() => _ProfilesState();
 }
@@ -61,6 +67,24 @@ class _ProfilesState extends State<CloudProfilesScreen> {
     }
   }
 
+  Future<void> discuss(Json memory) async {
+    if (saving) return;
+    setState(() {
+      saving = true;
+      error = null;
+    });
+    try {
+      await widget.session.mutate('POST', '/v1/profile-focus/${memory['id']}', {
+        'version': memory['version'],
+      });
+      if (mounted) widget.openPrivateChat?.call();
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = widget.session;
@@ -72,6 +96,19 @@ class _ProfilesState extends State<CloudProfilesScreen> {
             .firstOrNull ??
         {};
     final own = !partner;
+    final chatAvailable =
+        session.state['profile_mode'] is Json && widget.openPrivateChat != null;
+    final portrait = own
+        ? _map(session.state['daily_portrait'])
+        : <String, dynamic>{};
+    final observations = (portrait['observations'] as List? ?? const [])
+        .whereType<Json>();
+    final pending = (portrait['pending'] as List? ?? const [])
+        .whereType<Json>();
+    final ownMemories = {
+      for (final row in session.rows('memories'))
+        if (row['owner'] == selfId) row['id']: row,
+    };
     final published = profile['published'] == true;
     final data = _map(own ? profile['published_data'] : profile['data']);
     final life = _map(data['life']);
@@ -108,7 +145,87 @@ class _ProfilesState extends State<CloudProfilesScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        Text(published ? '已发布 · 仅配对双方可见' : '尚未发布档案', style: editionMeta),
+        if (own && chatAvailable) ...[
+          Text('我的每日档案', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            observations.isEmpty && pending.isEmpty
+                ? '仅自己可见 · 与 DP 聊过的偏好会在这里整理。'
+                : '仅自己可见 · 整理于 ${portrait['as_of']}',
+            style: editionMeta,
+          ),
+          if (observations.isNotEmpty) const Text('已确认'),
+          for (final observation in observations)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(observation['text'] as String),
+              trailing: ownMemories[observation['id']] == null
+                  ? null
+                  : const Icon(Icons.chat_bubble_outline),
+              onTap: ownMemories[observation['id']] == null || saving
+                  ? null
+                  : () => discuss(ownMemories[observation['id']]!),
+            ),
+          if (pending.isNotEmpty) const Text('待我核对'),
+          for (final item in pending)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(item['text'] as String),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: ownMemories[item['id']] == null
+                  ? null
+                  : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MemoryEditor(
+                          session: session,
+                          row: ownMemories[item['id']]!,
+                        ),
+                      ),
+                    ),
+            ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: widget.openPrivateChat,
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('和 DP 聊聊我的档案'),
+            ),
+          ),
+          const Divider(),
+        ],
+        if (chatAvailable &&
+            (ownMemories.isNotEmpty || memories.isNotEmpty)) ...[
+          Text(
+            own ? '我的对话档案' : '伴侣的对话档案',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          for (final row
+              in (own
+                  ? ownMemories.values.where(
+                      (r) =>
+                          !pending.any((p) => p['id'] == r['id']) &&
+                          !observations.any((p) => p['id'] == r['id']),
+                    )
+                  : memories))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                row['scope'] == 'shared'
+                    ? Icons.people_outline
+                    : Icons.lock_outline,
+              ),
+              title: Text(row['text'].toString()),
+              subtitle: Text(switch (row['scope']) {
+                'shared' => '已向伴侣发布',
+                'private' => '仅自己保存',
+                _ => '待本人确认',
+              }),
+              trailing: own ? const Icon(Icons.chat_bubble_outline) : null,
+              onTap: own && !saving ? () => discuss(row) : null,
+            ),
+        ],
+        if (!chatAvailable || version > 0)
+          Text(published ? '原有档案 · 已发布给伴侣' : '原有档案 · 尚未发布', style: editionMeta),
         if (published) ...[
           if (life.isNotEmpty || comm.isNotEmpty)
             Padding(
@@ -132,11 +249,9 @@ class _ProfilesState extends State<CloudProfilesScreen> {
                 title: Text(entry.value),
                 subtitle: Text('${life[entry.key] ?? comm[entry.key]}'),
               ),
-          const Divider(),
-          const Text('五维倾向 · Mini-IPIP'),
-          if (scores.isEmpty)
-            const Text('尚无完整且已发布的量表结果。')
-          else ...[
+          if (scores.isNotEmpty) ...[
+            const Divider(),
+            const Text('五维倾向 · Mini-IPIP'),
             Semantics(
               label: '五维人格图，下方有完整的数值。',
               child: SizedBox(
@@ -156,27 +271,28 @@ class _ProfilesState extends State<CloudProfilesScreen> {
             const Text('每维来自四道自评题；分数只描述这次回答。'),
           ],
         ],
-        if (memories.isNotEmpty) ...[
+        if (!chatAvailable && memories.isNotEmpty) ...[
           const Divider(),
           const Text('本人已共享的记忆'),
           for (final m in memories) Text('• ${m['text']}'),
         ],
         if (own) ...[
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: saving
-                ? null
-                : () async {
-                    await Navigator.of(context).push<void>(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            _EditProfile(session: session, profile: profile),
-                      ),
-                    );
-                    if (mounted) setState(() {});
-                  },
-            child: Text(version == 0 ? '填写我的档案' : '编辑我的草稿'),
-          ),
+          if (!chatAvailable || version > 0)
+            OutlinedButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      await Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              _EditProfile(session: session, profile: profile),
+                        ),
+                      );
+                      if (mounted) setState(() {});
+                    },
+              child: Text(version == 0 ? '填写我的档案' : '编辑原有档案'),
+            ),
           if (published)
             TextButton(
               onPressed: saving
