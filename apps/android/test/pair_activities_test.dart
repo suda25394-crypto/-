@@ -4,6 +4,7 @@ import 'package:couple_app/src/data/catalog.dart';
 import 'package:couple_app/src/data/pair_activity.dart';
 import 'package:couple_app/src/services/cloud_session.dart';
 import 'package:couple_app/src/ui/cloud_records.dart';
+import 'package:couple_app/src/ui/dp_module_chat.dart';
 import 'package:couple_app/src/ui/pair_activities.dart';
 import 'package:couple_app/src/ui/white_purple_tabs.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,6 +100,94 @@ class _EditSession extends CloudSession {
 }
 
 void main() {
+  testWidgets(
+    'draw follows its linked plan or memory and a returned wish can vote again',
+    (t) async {
+      for (final stage in ['planned', 'remembered', 'wish']) {
+        final session = CloudSession();
+        addTearDown(session.dispose);
+        session.state = {
+          'user': {'id': 'bob'},
+          'modules': <Json>[
+            {
+              'id': 'w',
+              'module': 'wish',
+              'title': '一起散步',
+              'body': '约会行动签\n在街角走走',
+              'owner': 'alice',
+              'version': 2,
+            },
+            {
+              'id': 'p',
+              'module': 'calendar',
+              'title': '一起散步',
+              'body': '在街角走走',
+              'owner': 'alice',
+              'version': 2,
+            },
+            {
+              'id': 'm',
+              'module': 'memory',
+              'title': '散步之后',
+              'body': '我们去了东门',
+              'owner': 'bob',
+              'version': 1,
+            },
+          ],
+          'activities': <Json>[
+            {
+              'module_id': 'w',
+              'proposal_version': 2,
+              'agreed': false,
+              'votes': <Json>[
+                {'owner': 'alice', 'name': 'Alice', 'version': 0},
+                {'owner': 'bob', 'name': 'Bob', 'version': 0},
+              ],
+            },
+          ],
+          'journeys': <Json>[
+            {
+              'wish': 'w',
+              'plan': 'p',
+              'stage': stage,
+              'memory': stage == 'remembered' ? 'm' : null,
+              'day': '2026-11-19',
+              'clock': '14:30',
+              'place': '东门',
+            },
+          ],
+        };
+        await t.pumpWidget(
+          MaterialApp(
+            key: UniqueKey(),
+            home: PairActivitiesPage(session: session, kind: PairActivity.draw),
+          ),
+        );
+        await t.pumpAndSettle();
+        if (stage == 'wish') {
+          expect(find.text('愿意'), findsOneWidget);
+          expect(find.text('已排进共同日程'), findsNothing);
+        } else {
+          final planned = stage == 'planned';
+          expect(find.text(planned ? '已排进共同日程' : '已留下共同回忆'), findsOneWidget);
+          expect(find.text('愿意'), findsNothing);
+          expect(find.text('两人都愿意'), findsNothing);
+          if (planned)
+            expect(find.text('2026-11-19 · 14:30 · 东门'), findsOneWidget);
+          await t.tap(find.text(planned ? '查看共同日程' : '查看共同回忆'));
+          await t.pumpAndSettle();
+          expect(
+            t
+                .widget<CloudModuleDetail>(find.byType(CloudModuleDetail))
+                .moduleId,
+            planned ? 'p' : 'm',
+          );
+        }
+        expect(t.takeException(), isNull);
+      }
+    },
+  );
+
   testWidgets(
     'normal edit and targeted DP draft retain the activity type once',
     (t) async {

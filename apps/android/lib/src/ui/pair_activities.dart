@@ -52,6 +52,11 @@ class PairActivitiesPage extends StatelessWidget {
           final activities = {
             for (final a in session.rows('activities')) a['module_id']: a,
           };
+          final journeys = {
+            if (!note)
+              for (final j in session.rows('journeys'))
+                if (j['wish'] != null) j['wish']: j,
+          };
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             itemCount: records.length + 1,
@@ -89,6 +94,7 @@ class PairActivitiesPage extends StatelessWidget {
                 session: session,
                 record: record,
                 activity: activities[record['id']],
+                journey: journeys[record['id']],
               );
             },
           );
@@ -251,11 +257,12 @@ class _SharedActivityCard extends StatefulWidget {
     required this.session,
     required this.record,
     required this.activity,
+    required this.journey,
   });
   final PairActivity kind;
   final CloudSession session;
   final Json record;
-  final Json? activity;
+  final Json? activity, journey;
 
   @override
   State<_SharedActivityCard> createState() => _SharedActivityCardState();
@@ -319,7 +326,15 @@ class _SharedActivityCardState extends State<_SharedActivityCard> {
     final reply = recipient?['note'] as String? ?? '';
     final agrees = activity?['agreed'] == true;
     const labels = {'accept': '愿意', 'decline': '这次不约', 'pending': '再想想'};
+    final journey = widget.journey;
+    final planned = journey?['stage'] == 'planned';
+    final linkedId = switch (journey?['stage']) {
+      'planned' => journey?['plan'] as String?,
+      'remembered' => journey?['memory'] as String?,
+      _ => null,
+    };
     return Card(
+      semanticContainer: false,
       margin: const EdgeInsets.only(top: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -348,6 +363,16 @@ class _SharedActivityCardState extends State<_SharedActivityCard> {
                       : () => _respond(mine, 'accept', writeNote: true),
                   child: Text(received ? '修改回信' : '收下并回信'),
                 ),
+            ] else if (linkedId != null) ...[
+              Text(planned ? '已排进共同日程' : '已留下共同回忆'),
+              if (planned)
+                Text(
+                  [
+                    journey?['day'],
+                    journey?['clock'],
+                    journey?['place'],
+                  ].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
+                ),
             ] else ...[
               Text(agrees ? '两人都愿意' : '你们各自的选择'),
               for (final v in votes)
@@ -368,19 +393,24 @@ class _SharedActivityCardState extends State<_SharedActivityCard> {
                       ),
                   ],
                 ),
+            ],
+            if (!note)
               TextButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => CloudModuleDetail(
                       session: widget.session,
-                      moduleId: record['id'] as String,
+                      moduleId: linkedId ?? record['id'] as String,
                     ),
                   ),
                 ),
-                child: Text(agrees ? '打开共同心愿，安排日期' : '查看共同心愿或和 DP 讨论'),
+                child: Text(
+                  linkedId != null
+                      ? (planned ? '查看共同日程' : '查看共同回忆')
+                      : (agrees ? '打开共同心愿，安排日期' : '查看共同心愿或和 DP 讨论'),
+                ),
               ),
-            ],
             if (error != null) Text(error!),
           ],
         ),
