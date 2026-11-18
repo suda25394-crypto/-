@@ -1,6 +1,6 @@
 # Android 0.4.0+4 · 私人 Demo 验收
 
-[下载 APK、对应服务 ZIP 和 SHA-256](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4) · [Muse 部署及双手机点按步骤](../deploy/couple/MUSE_0_4.md) · [PR #1](https://github.com/suda25394-crypto/-/pull/1)
+[下载 APK、对应服务 ZIP 和 SHA-256](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4-r2) · [Muse 部署及双手机点按步骤](../deploy/couple/MUSE_0_4.md) · [PR #1](https://github.com/suda25394-crypto/-/pull/1)
 
 本版延续 `d2129a6` 的 Flutter 界面及 `7769b5c` 的开发交接。规划基准为 main 的 `39ea4c8`。复用了 D-46 工作副本中的了解模式和日更思路，集成到产品的既有鉴权、事务迁移与会话中。Android 发布标签固定客户端源码；配套服务修订 2 的提交和校验值随发布清单提供。共用 PR 只更新开发分支。
 
@@ -48,7 +48,7 @@ Android 文件选择器已实际打开并导入合成海报；日期、地点回
 
 ### 服务修订 2
 
-首轮 Android 点按暴露出正文改到下午四点、首页却仍显示旧集合时间的问题。修订 2 在确认同一份草稿的事务内更新正文和可以确定的集合时间。A 最终确认「周末改为下午四点一起去海边」，B 的同一条计划从 17:30 变为 16:00，只有一个新版本和一条时间变更。仅写「下午见面」可移除旧的精确时间；写电影散场时间不会改集合。矛盾的时间要求重新核对，整个修改保留在草稿。原 APK 继续使用已有确认接口。公网部署时请核对 `service_revision=2`。
+首轮 Android 点按暴露出正文改到下午四点、首页却仍显示旧集合时间的问题。修订 2 在确认同一份草稿的事务内更新正文和可以确定的集合时间。A 最终确认「周末改为下午四点一起去海边」，B 的同一条计划从 17:30 变为 16:00，只有一个新版本和一条时间变更。仅写「下午见面」可移除旧的精确时间；写电影散场时间不会改集合。矛盾的时间要求重新核对，整个修改保留在草稿。最终 APK 的 A 又实输「把海风散步的周末计划改为下午四点半」，确认编辑后的文字，B 强停重开后从首页读到 16:30、东门游客中心，同一计划第 7 版仅一条 16:00→16:30 动态。[B 的首页](evidence/android-0.4/d48-b-confirmed-clock.png) · [B 看到的变更](evidence/android-0.4/d48-b-clock-change.png)。原 APK 继续使用已有确认接口。公网部署时请核对 `service_revision=2`。
 
 ## APK 与重跑
 

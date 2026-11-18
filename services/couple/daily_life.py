@@ -178,11 +178,19 @@ def _parse_clock(value):
     return f"{h:02}:{m:02}"
 
 
-def _confirmed_clock(old_body, body, request):
+def _confirmed_clock(old_body, body, request, title):
     def clauses(text):
         return [part.strip() for part in _SPLIT.split(text) if part.strip()]
 
     def explicit(part):
+        # A verified, bound record may be addressed by its own name. Keep the
+        # rest of the sentence intact so an activity within it is still distinct.
+        named = re.fullmatch(
+            rf"(?:把|将)?[「“]?{re.escape(title)}[」”]?(?P<tail>.+)", part
+        )
+        if named:
+            tail = named["tail"]
+            part = tail[1:] if tail.startswith("的") else "计划" + tail
         return (
             _MARKED.fullmatch(part)
             or _RESCHEDULE.fullmatch(part)
@@ -217,7 +225,7 @@ def _confirmed_clock(old_body, body, request):
                 "meeting_clock",
                 "请单独写一行「集合时间：16:00」或「集合时间：待定」，再确认草稿。",
             )
-    if not changed:
+    if not changed and not (allow_short and clock_mentions and old_body == body):
         return None
     times = {_parse_clock(value) for value in clock_mentions}
     if len(times) != 1:
@@ -232,17 +240,15 @@ def _confirmed_clock(old_body, body, request):
 def content_edit(c, a, before, title, body, *, confirmed_request=None):
     fields = [k for k, v in (("title", title), ("body", body)) if v != before[k]]
     prior = None
-    if (
-        confirmed_request is not None
-        and "body" in fields
-        and before["module"] in ("date", "calendar")
-    ):
+    if confirmed_request is not None and before["module"] in ("date", "calendar"):
         key = before["id"]
         plan = c.execute(
             "SELECT stage,clock FROM life_plans WHERE plan=?", (key,)
         ).fetchone()
         if not plan or plan["stage"] == "planned":
-            clock = _confirmed_clock(before["body"], body, confirmed_request)
+            clock = _confirmed_clock(
+                before["body"], body, confirmed_request, before["title"]
+            )
             old_clock = plan["clock"] if plan else ""
             if clock is not None and clock != old_clock:
                 c.execute(

@@ -1,6 +1,6 @@
 # Muse 交接 · Android 私人测试版 0.4.0+4
 
-请部署 [Android 0.4 测试发布](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4) 中的 **couple-service-r2-*.zip**，按同页 **SHA256SUMS-r2.txt** 核对 APK 和 ZIP。手机仍用已验证的 25a08a1 安装包，服务修订 2 修复计划确认后集合时间的同步；服务文件名中带实际源码提交。现有公网地址在 11 月 18 日的检查返回产品 schema 1。手机 0.4 需要 schema 3，且模型调用须另有成功回执。
+请部署 [Android 0.4 测试发布](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4-r2) 中的 **couple-service-r2-*.zip**，按同页 **SHA256SUMS-r2.txt** 核对 APK 和 ZIP。手机仍用已验证的 25a08a1 安装包，服务修订 2 修复计划确认后集合时间的同步；服务文件名中带实际源码提交。现有公网地址在 11 月 18 日的检查返回产品 schema 1。手机 0.4 需要 schema 3，且模型调用须另有成功回执。
 
 ## 准备与回退点
 

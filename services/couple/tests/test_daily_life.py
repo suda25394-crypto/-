@@ -76,7 +76,7 @@ class DailyLifeTests(unittest.TestCase):
 
     def test_confirmed_dp_update_changes_same_meeting_once_from_final_draft(self):
         with patch("services.couple.daily_life.today", return_value=DAY):
-            key = self.make("date", "周末计划", "湖边散步")
+            key = self.make("calendar", "海风散步", "湖边散步")
             self.post(
                 key,
                 "meeting",
@@ -85,12 +85,17 @@ class DailyLifeTests(unittest.TestCase):
             self.vote(key, self.a)
             self.vote(key, self.b)
 
-            def draft(text):
+            def draft(text, module=False):
+                data = {"request_id": uuid4().hex, "scope": "private", "text": text}
+                path = "messages"
+                if module:
+                    path = f"modules/{key}/conversation"
+                    data["version"] = self.v(key)
                 self.call(
                     "POST",
-                    "messages",
+                    path,
                     self.a,
-                    {"request_id": uuid4().hex, "scope": "private", "text": text},
+                    data,
                 )
                 d = next(
                     x for x in self.state(self.a)["drafts"] if x["status"] == "pending"
@@ -136,12 +141,23 @@ class DailyLifeTests(unittest.TestCase):
             d = draft("把我们确认好的周末计划改成下午四点")
             confirm(d, "下午看电影，四点散场")
             self.assertEqual((latest()["clock"], latest()["version"]), ("16:00", 4))
-            d = draft("把我们确认好的周末计划改成下午")
-            confirm(d, "改为下午四点半")
+            named = "把海风散步的周末计划改为下午四点半"
+            final = "周末改为下午四点半一起去海边"
+            d = draft(named)
+            confirm(d, final)
             self.assertEqual((latest()["clock"], latest()["version"]), ("16:30", 5))
-            d = draft("把我们确认好的周末计划改成下午")
+            # An earlier service saved this final body with a stale structured field.
+            self.post(
+                key,
+                "meeting",
+                self.payload(key, day=DAY, clock="16:00", place="东门", address=""),
+            )
+            d = draft(named)
+            confirm(d, final)
+            self.assertEqual((latest()["clock"], latest()["version"]), ("16:30", 7))
+            d = draft("把集合时间改为下午", module=True)
             confirm(d, "周末下午见面")
-            self.assertEqual((latest()["clock"], latest()["version"]), ("", 6))
+            self.assertEqual((latest()["clock"], latest()["version"]), ("", 8))
 
     def test_latest_meeting_feed_read_receipt_does_not_vote_and_survives_restart(self):
         with patch("services.couple.daily_life.today", return_value=DAY):
