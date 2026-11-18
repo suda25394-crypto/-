@@ -60,3 +60,7 @@
 ## 2026-11-18｜已确认加入私人 Demo 的四项 DP 功能
 
 [D-43](DECISIONS.md) 将双人意愿与确认、情境委托、实际体验反馈、共同回忆小游戏四项纳入当前开发范围。上表各领域仍保留其他候选功能。该小游戏已从创意进入开发要求，尚待实际交付。场景、数据行为与双账号验收以 [Android 功能任务书](../planning/ANDROID_FUNCTIONAL_DEMO.md) 为准。
+
+## 双人日常与通用对话（D-47、D-48）
+
+新确认的三项体验为共同事项变更动态、从心愿到计划与回忆的关联、当天集合与导航。DP 保留通用问答。与[每日档案及主动了解模式](PROFILE_QUESTIONNAIRE_FINAL_V1.md)一并交给 Android Codex，按[任务书](../planning/ANDROID_FUNCTIONAL_DEMO.md)分别验收。
