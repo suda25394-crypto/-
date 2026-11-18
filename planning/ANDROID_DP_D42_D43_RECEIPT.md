@@ -2,6 +2,8 @@
 
 2026-11-18。开发分支 `codex/android-dp-d42-d43` 从 Muse 使用的 `3af591d` 建立，合入当时 GitHub main 的任务书和决策 `e7d3433`。本次测试在 Windows 的独立工作树及本地临时数据库完成。界面沿用现有 Flutter 客户端。
 
+应用与服务代码提交为 `d2129a6`。交付前再次读取 [GitHub main 的最新任务书](https://github.com/suda25394-crypto/-/blob/0dafd817e4d25278d8dc6f6eb9591a59288d58e0/planning/ANDROID_FUNCTIONAL_DEMO.md)（`0dafd81`），逐字比较跨月检索与四项 DP 的验收段落，两版一致。新列入任务书的 D-45、D-46 建档要求由后续专项跟进。交付时 GitHub 上的 Muse 分支仍为 `3af591d`。
+
 ## 两个账号实际做了什么
 
 | 场景 | 操作与实际结果 |
