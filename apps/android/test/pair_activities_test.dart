@@ -172,8 +172,9 @@ void main() {
           expect(find.text(planned ? '已排进共同日程' : '已留下共同回忆'), findsOneWidget);
           expect(find.text('愿意'), findsNothing);
           expect(find.text('两人都愿意'), findsNothing);
-          if (planned)
+          if (planned) {
             expect(find.text('2026-11-19 · 14:30 · 东门'), findsOneWidget);
+          }
           await t.tap(find.text(planned ? '查看共同日程' : '查看共同回忆'));
           await t.pumpAndSettle();
           expect(

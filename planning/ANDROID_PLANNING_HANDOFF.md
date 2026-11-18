@@ -1,6 +1,6 @@
 # Android 开发与产品规划交接
 
-**当前 Android 试用包为 0.4.1+5。** 白紫版延续 PR #1 的 R2 客户端，使用 Muse 已上线的产品服务。见[安装与验收回执](ANDROID_WHITE_PURPLE_RECEIPT.md)和[模拟器双账号记录](evidence/android-white-purple/README.md)。上版功能和服务端材料见[0.4.0+4 回执](ANDROID_0_4_RECEIPT.md)。
+**当前 Android 试用包为 0.5.0+6。** 双人便签和约会行动签接入原有 R2。两人可以从 0.4.1+5 覆盖安装，保留登录。见[下载、双账号验证与性能复测](ANDROID_EVERYDAY_RECEIPT.md)、[参考产品走查](../research/TWOO_PRODUCT_WALKTHROUGH.md)和[旧版回执](ANDROID_WHITE_PURPLE_RECEIPT.md)。
 
 ## 0.3 交接时的记录
 

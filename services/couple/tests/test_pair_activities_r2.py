@@ -58,7 +58,8 @@ class PairActivitiesR2Tests(unittest.TestCase):
 
             client, upstream = start()
             with client:
-                for actor in (login(client, "a"), login(client, "b")):
+                a, b = login(client, "a"), login(client, "b")
+                for actor in (a, b):
                     snapshot = state(client, actor)
                     acts = {r["module_id"]:r for r in snapshot["activities"]}
                     self.assertTrue(acts[draw["id"]]["agreed"])
@@ -66,4 +67,31 @@ class PairActivitiesR2Tests(unittest.TestCase):
                     self.assertEqual((receiver["owner"],receiver["note"],receiver["version"]),
                                      ("bob","我来接你",1))
                     self.assertEqual(len(snapshot["modules"]), 2)
+                self.assertEqual(upstream.contexts, [])
+
+                def advance(actor, key, action, op_id, **fields):
+                    snapshot = state(client, actor)
+                    version = next(r["version"] for r in snapshot["modules"] if r["id"] == key)
+                    response = client.post(f"/v1/modules/{key}/life/{action}", headers=actor,
+                                           json={"version":version,"request_id":op_id,**fields})
+                    self.assertEqual(response.status_code, 200, response.text)
+                    return response.json()["module_id"]
+
+                def journey(actor):
+                    return next(j for j in state(client, actor)["journeys"] if j["wish"] == draw["id"])
+
+                meeting = {"day":"2026-11-19","clock":"14:30","place":"东门"}
+                plan = advance(a, draw["id"], "meeting", "first-meeting", **meeting)
+                for actor in (a, b):
+                    j = journey(actor)
+                    self.assertEqual((j["stage"],j["plan"],j["place"]), ("planned",plan,"东门"))
+                    votes = next(v for v in state(client, actor)["activities"] if v["module_id"] == draw["id"])
+                    self.assertFalse(votes["agreed"])
+                advance(b, plan, "return", "return-to-wish")
+                self.assertEqual(journey(a)["stage"], "wish")
+                self.assertEqual(advance(b, draw["id"], "meeting", "second-meeting", **meeting), plan)
+                memory = advance(a, plan, "remember", "remembering", occurred=True, note="一起到了东门")
+                for actor in (a, b):
+                    j = journey(actor)
+                    self.assertEqual((j["stage"],j["memory"]), ("remembered",memory))
                 self.assertEqual(upstream.contexts, [])

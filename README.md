@@ -1,6 +1,6 @@
 # 情侣 AI 生态｜AI 主导的情侣超级 App（产品名待定）
 
-**本轮双人试用包**　[下载「双生宇宙」白紫版 Android 0.4.1+5](https://github.com/suda25394-crypto/-/releases/download/android-white-purple-v0.4.1-test.5/couple-white-purple-0.4.1-test.5.apk)。旧版可直接覆盖安装。双方各自登录后进入「我们仨」，右上角进入与 DP 的私聊。试用说明和验证记录见[白紫版回执](planning/ANDROID_WHITE_PURPLE_RECEIPT.md)。
+**本轮双人试用包**　[下载「双生宇宙」Android 0.5.0+6](https://github.com/suda25394-crypto/-/releases/download/android-everyday-v0.5.0-test.6/couple-everyday-0.5.0-test.6.apk)。两人覆盖安装后，从「功能 → 两人互动」写便签、回信，或抽一张约会行动签，一起决定见面的时间地点。[双人试法与测试记录](planning/ANDROID_EVERYDAY_RECEIPT.md) · [上版 0.4.1+5](planning/ANDROID_WHITE_PURPLE_RECEIPT.md)
 
 上一版 Android 私人 Demo **0.4.0+4** 的[测试 APK 及校验值](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4-r2)、[按 D 编号的验收结果](planning/ANDROID_0_4_RECEIPT.md)和 [Muse 部署交接](deploy/couple/MUSE_0_4.md)在此开发分支。
 

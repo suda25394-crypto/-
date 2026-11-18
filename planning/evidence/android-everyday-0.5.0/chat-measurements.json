@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-19",
+  "unit": "ms",
+  "scope": {
+    "device": "Android 13 x86_64 模拟器",
+    "history_at_start": 40,
+    "receiver_poll_period_ms": 4000,
+    "fixture_delay_ms": {
+      "state_and_messages": 150,
+      "model": 650
+    },
+    "source": {
+      "old": "ff47348aa578d4d9c1194bfe5e087c9279832768",
+      "new_measured": "b87471edfe8d0604f289959a441057da3e80d3d5",
+      "final": "c66e7d57a7611b479cd5ad6946087b7d98074185"
+    },
+    "source_difference": "新旧对照测的是 b87471ed；b87471ed 到最终 c66e7d5 仅修改行动签页面及其测试，聊天、轮询、网络及渲染代码相同。Base 是从旧源码重编的 Release；Old 是 Debug。"
+  },
+  "definitions": {
+    "cold_editable": "已有登录态。强停后，从发出系统启动命令到同时检测到群标题、指定历史消息、已启用输入框。",
+    "keyboard": "发起点击输入框，到检测到输入法已显示且底部聊天页签隐藏。",
+    "private": "发起点击私聊，到检测到私聊标题和输入框。",
+    "tap": "自动化驱动发起点击发送。",
+    "self": "严格 Debug VM 语义树发现与消息匹配的只读、可长按、可见且不属于输入框的节点，包含探测耗时。",
+    "peer": "独立接收方 CloudSession 首次报告状态中含该条消息；未测接收方屏幕首帧。",
+    "model": "本地模拟模型进入函数。",
+    "reply": "发送方界面首次探测到完整模拟回复；非首 token。",
+    "phase": "从接收方上次 read_complete 到 tap；按目标相位安排，实测值独立取整。"
+  },
+  "aot_release": {
+    "Base": {
+      "cold_editable": [2565, 2017, 1580],
+      "keyboard": [1332, 779, 938],
+      "private": [304, 218, 222],
+      "normal": {
+        "phase_target": [550, 1600, 2750, 650],
+        "phase_observed": [550, 1600, 2751, 650],
+        "tap_to_peer": [3449, 2410, 1243, 3363]
+      },
+      "dp": {
+        "phase_target": [2100, 3000],
+        "phase_observed": [2100, 3001],
+        "tap_to_model": [321, 360],
+        "tap_to_reply": [1309, 1342]
+      }
+    },
+    "Next": {
+      "cold_editable": [2427, 1946, 1752],
+      "keyboard": [801, 969, 995],
+      "private": [298, 288, 474],
+      "normal": {
+        "phase_target": [550, 1600, 2750, 650],
+        "phase_observed": [551, 1600, 2750, 650],
+        "tap_to_peer": [3438, 2415, 1239, 3362]
+      },
+      "dp": {
+        "phase_target": [2100, 3000],
+        "phase_observed": [2100, 3000],
+        "tap_to_model": [342, 343],
+        "tap_to_reply": [1453, 1312]
+      }
+    }
+  },
+  "debug_strict_vm": {
+    "Old": {
+      "normal": {
+        "phase_target": [550, 1600, 2750, 650],
+        "phase_observed": [550, 1600, 2750, 650],
+        "tap_to_peer": [3457, 2409, 1229, 3379],
+        "tap_to_self": [1154, 942, 978, 901],
+        "self_to_peer": [2302, 1467, 250, 2478]
+      }
+    },
+    "New": {
+      "normal": {
+        "phase_target": [550, 1600, 2750, 650],
+        "phase_observed": [550, 1600, 2750, 650],
+        "tap_to_peer": [3478, 2382, 1253, 3367],
+        "tap_to_self": [250, 281, 217, 305],
+        "self_to_peer": [3227, 2101, 1035, 3062]
+      }
+    }
+  },
+  "legacy_scroll": {
+    "method": "6 次系统 swipe，各 420 ms，向旧/向新交替。每次给定 750 ms 收尾后，从应用图层 SurfaceFlinger 时间戳计算相邻呈现间隔；合并各次间隔后按最近秩取 P95。",
+    "interpretation": "两版采到的间隔数不同，混有松手后的惯性阶段。仅作旁证；不据此判断等距手指拖动是否变快。",
+    "runs": {
+      "Base": {
+        "interval_count": 355,
+        "present_interval_p95": 25.56,
+        "over_25ms_count": 21
+      },
+      "Next": {
+        "interval_count": 179,
+        "present_interval_p95": 36.01,
+        "over_25ms_count": 36
+      }
+    }
+  },
+  "reconstruction": {
+    "inputs": [
+      "comparison.ndjson",
+      "events.ndjson",
+      "receiver-ff47348.jsonl",
+      "receiver-candidate.jsonl",
+      "receiver-debug.jsonl"
+    ],
+    "method": "每一个 run 内按 send 记录顺序，使用该次唯一的测试消息文本匹配接收方和模型事件。tap_to_peer 为首次匹配的接收方 unix_ms 减 wall0；self_to_peer 为同一时间减 bubble_wall。tap_to_model 取相同消息的 model_enter.t 减 t0 后换算为毫秒。各端点独立取整，分段之和与总值可差 1 ms。AOT 的本端气泡识别未达到严格标准，未收录该端点。"
+  }
+}
