@@ -52,7 +52,7 @@
 | 商业化 | [docs/BUSINESS.md](docs/BUSINESS.md) | 免费/会员与成本假设 |
 | 竞品调查 | [research/COMPETITORS.md](research/COMPETITORS.md) | 海内外产品参考，仍需逐项核验 |
 | 创意储备 | [ideas/BACKLOG.md](ideas/BACKLOG.md) | 未确立需求与未来功能 |
-| **科学题库与个性化画像 V1** | [docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 已核验中文 Mini-IPIP 20题依据，定稿图文画像、确认更新规则，待开发 |
+| **与 DP 聊出个人档案** | [对话建档规范](docs/PROFILE_QUESTIONNAIRE_FINAL_V1.md) | 本人自由表达与确认，已发布档案双方互看；附历史量表依据 |
 | **进度** | [planning/PROGRESS.md](planning/PROGRESS.md) | 已部署底座、真实验收状态、未实现能力与下一步 |
 | **服务器交接** | [planning/SERVER_HANDOVER_2026-11-16.md](planning/SERVER_HANDOVER_2026-11-16.md) | Open WebUI 与网关已部署；DeepSeek 未启用；Tailscale 私网入口已配置 |
 | **公网访问实施记录** | [planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md](planning/PUBLIC_ACCESS_FUNNEL_2026-11-17.md) | Tailscale Funnel 已开通，站外 HTTP 200；真实账号登录与双手机验收待完成 |
