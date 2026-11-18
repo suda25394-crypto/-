@@ -8,6 +8,7 @@ import 'ui/cloud_profiles.dart';
 import 'services/demo_store.dart';
 import 'ui/common_space.dart';
 import 'ui/director.dart';
+import 'ui/dp_game.dart';
 import 'ui/home.dart';
 import 'ui/modules.dart';
 import 'ui/profiles.dart';
@@ -66,6 +67,11 @@ class _AppShellState extends State<AppShell> {
         MaterialPageRoute(
           builder: (_) => CloudModuleScreen(session: s, id: id),
         ),
+      );
+    } else if (id == ModuleId.game) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => DpGameScreen(session: s)),
       );
     } else if (id == ModuleId.universe) {
       Navigator.push(
@@ -262,6 +268,8 @@ class _AppShellState extends State<AppShell> {
                                 ? '双方可见 · $count 条共同记录'
                                 : id == ModuleId.universe
                                 ? '场景预览'
+                                : id == ModuleId.game
+                                ? '从共同回忆出题，轮流猜一猜'
                                 : '联机功能待开放',
                             const [],
                           );

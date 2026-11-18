@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../services/cloud_session.dart';
 import 'theme.dart';
+import 'dp_mandates.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.session, required this.onDemo, super.key});
@@ -170,11 +171,17 @@ class CloudChat extends StatefulWidget {
     required this.session,
     required this.scope,
     required this.openRecords,
+    this.moduleId,
+    this.thread,
+    this.sendInModule,
     super.key,
   });
   final CloudSession session;
   final String scope;
   final VoidCallback openRecords;
+  final String? moduleId;
+  final Json? thread;
+  final Future<void> Function(String text, String requestId)? sendInModule;
   @override
   State<CloudChat> createState() => _CloudChatState();
 }
@@ -194,11 +201,15 @@ class _CloudChatState extends State<CloudChat> {
       _error = null;
     });
     try {
-      await widget.session.mutate('POST', '/v1/messages', {
-        'scope': widget.scope,
-        'text': text,
-        'request_id': _key,
-      });
+      if (widget.sendInModule case final send?) {
+        await send(text, _key!);
+      } else {
+        await widget.session.mutate('POST', '/v1/messages', {
+          'scope': widget.scope,
+          'text': text,
+          'request_id': _key,
+        });
+      }
       if (!mounted) return;
       _input.clear();
       _key = null;
@@ -208,6 +219,7 @@ class _CloudChatState extends State<CloudChat> {
     } catch (e) {
       if (!mounted) return;
       _failedText = text;
+      if (e is CloudError && e.code == 'version_conflict') _key = null;
       _error = e.toString();
       _unknown =
           e is CloudError &&
@@ -302,13 +314,21 @@ class _CloudChatState extends State<CloudChat> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.session,
     builder: (context, _) {
-      final rows = widget.session.messages(widget.scope);
+      final thread = widget.thread;
+      final rows = thread == null
+          ? widget.session.messages(widget.scope)
+          : (thread['messages'] as List).whereType<Json>().toList();
       final pending = widget.session
           .rows('pending_messages')
-          .where((r) => r['scope'] == widget.scope)
+          .where(
+            (r) =>
+                r['scope'] == widget.scope && r['module_id'] == widget.moduleId,
+          )
           .toList();
-      final draftCount = widget.session
-          .rows('drafts')
+      final drafts = thread == null
+          ? widget.session.rows('drafts')
+          : (thread['drafts'] as List).whereType<Json>();
+      final draftCount = drafts
           .where((d) => d['scope'] == widget.scope && d['status'] == 'pending')
           .length;
       return SafeArea(
@@ -321,14 +341,24 @@ class _CloudChatState extends State<CloudChat> {
                 children: [
                   Expanded(
                     child: Text(
-                      _shared ? '双方可见 · 群内 @AI 触发回复' : '仅自己可见 · 发给 AI',
+                      thread != null && _shared
+                          ? '双方可见 · DP 围绕本条记录回复'
+                          : _shared
+                          ? '双方可见 · @DP 或 @AI 邀请回复'
+                          : '仅自己可见 · 发给 DP',
                       style: editionMeta,
                     ),
                   ),
+                  if (_shared && thread == null)
+                    MandateInboxButton(session: widget.session),
                   TextButton(
                     onPressed: widget.openRecords,
                     child: Text(
-                      draftCount > 0 ? '草稿 $draftCount / 记忆' : '草稿与记忆',
+                      thread != null
+                          ? '本条草稿（$draftCount）'
+                          : draftCount > 0
+                          ? '草稿 $draftCount / 记忆'
+                          : '草稿与记忆',
                     ),
                   ),
                 ],
@@ -389,6 +419,11 @@ class _CloudChatState extends State<CloudChat> {
                                   m['text'] as String? ?? '',
                                 ),
                               ),
+                              if (_shared && thread == null && !ai)
+                                MandateFromMessage(
+                                  session: widget.session,
+                                  message: m,
+                                ),
                             ],
                           ),
                         );
@@ -405,21 +440,24 @@ class _CloudChatState extends State<CloudChat> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (_shared)
+                  if (_shared && thread == null)
                     TextButton(
                       onPressed: _sending
                           ? null
                           : () {
-                              if (!_input.text.toLowerCase().contains('@ai')) {
+                              if (!RegExp(
+                                r'(?<![A-Za-z0-9_@])@(?:AI|DP)(?![A-Za-z0-9_])',
+                                caseSensitive: false,
+                              ).hasMatch(_input.text)) {
                                 _input.value = TextEditingValue(
-                                  text: '@AI ${_input.text}',
+                                  text: '@DP ${_input.text}',
                                   selection: TextSelection.collapsed(
                                     offset: _input.text.length + 4,
                                   ),
                                 );
                               }
                             },
-                      child: const Text('@AI'),
+                      child: const Text('@DP'),
                     ),
                   Expanded(
                     child: TextField(
@@ -427,6 +465,13 @@ class _CloudChatState extends State<CloudChat> {
                       controller: _input,
                       minLines: 1,
                       maxLines: 3,
+                      maxLength: 2000,
+                      buildCounter: (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        required maxLength,
+                      }) => null,
                       enabled: !_sending,
                       decoration: InputDecoration(
                         labelText: _shared ? '共同消息' : '私人消息',

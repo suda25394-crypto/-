@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from .database import encode
 from .profile_schema import public_projection, validate_profile
+from . import dp_recall
 
 
 class Failure(Exception):
@@ -82,6 +83,15 @@ def clean_completion(value):
         ) from None
 
 
+def check_target_items(target, items):
+    if (
+        target is not None
+        and items
+        and (len(items) != 1 or items[0]["module"] != target["module"])
+    ):
+        raise Failure(502, "model_format", "模型草稿没有对应当前模块，请重新提出修改。")
+
+
 @dataclass(frozen=True)
 class Actor:
     id: str
@@ -91,8 +101,14 @@ class Actor:
     session: str
 
 
-def bump_epoch(c, actor):
+def bump_epoch(c, actor, *, invalidate_history=True):
     c.execute("UPDATE couples SET epoch=epoch+1 WHERE id=?", (actor.pair,))
+    if invalidate_history:
+        c.execute(
+            """INSERT INTO dp_history_floor SELECT id,epoch FROM couples WHERE id=?
+                     ON CONFLICT(pair) DO UPDATE SET epoch=excluded.epoch""",
+            (actor.pair,),
+        )
 
 
 def read_epoch(c, actor):
@@ -160,33 +176,56 @@ class Records:
             )
         ]
 
+    def module(self, c, a, key):
+        row = c.execute(
+            """SELECT id,owner,module,title,body,version FROM modules
+            WHERE pair=? AND id=?""",
+            (a.pair, key),
+        ).fetchone()
+        if not row:
+            missing()
+        return dict(row) | {"scope": "shared"}
+
     def drafts(self, c, a):
         rows = c.execute(
-            """SELECT id,owner,version,scope,status,items FROM drafts WHERE pair=? AND source NOT LIKE 'manual:%' AND (scope='shared' OR owner=?) ORDER BY rowid DESC""",
+            """SELECT d.id,d.owner,d.version,d.scope,d.status,d.items,
+                      t.module_id AS target_id,t.expected AS target_version
+               FROM drafts d LEFT JOIN dp_targets t ON t.draft=d.id
+               WHERE d.pair=? AND d.source NOT LIKE 'manual:%' AND (d.scope='shared' OR d.owner=?)
+               ORDER BY d.rowid DESC""",
             (a.pair, a.id),
         )
         return [dict(r) | {"items": json.loads(r["items"])} for r in rows]
 
-    def context(self, c, a, scope):
+    def context(self, c, a, scope, text="", target=None):
+        from . import dp_activity, dp_mandates
+
         profiles = [
             {"owner": v["owner"], "data": v["data"]} for v in self.profiles(c, a, True)
         ]
-        memories = [
-            {"owner": v["owner"], "text": v["text"]} for v in self.memories(c, a, scope)
-        ]
-        # Revocable profile or memory contents can be echoed in an old AI reply.
-        # No old AI replies, pending drafts or private conversation history cross contexts.
+        module_id = target["id"] if target else None
+        memories, history = dp_recall.retrieve(
+            c, a, scope, text + (" " + target["title"] if target else ""), module_id
+        )
         recent = c.execute(
-            """SELECT input,owner FROM chats
+            """SELECT input,owner,output FROM chats
             WHERE pair=? AND scope=? AND (scope='shared' OR owner=?) AND done=1
-            AND epoch=(SELECT epoch FROM couples WHERE id=chats.pair)
+            AND module_id IS ? AND epoch>=COALESCE((SELECT epoch FROM dp_history_floor WHERE pair=chats.pair),0)
+            AND NOT EXISTS (SELECT 1 FROM memories m WHERE m.pair=chats.pair AND m.owner=chats.owner AND m.source=chats.request_id)
             ORDER BY at DESC,rowid DESC LIMIT 3""",
-            (a.pair, scope, a.id),
+            (a.pair, scope, a.id, module_id),
         ).fetchall()
-        prior = [
-            {"role": "user", "owner": r["owner"], "text": r["input"]}
-            for r in reversed(recent)
-        ]
+        prior = []
+        for row in reversed(recent):
+            prior.append({"role": "user", "owner": row["owner"], "text": row["input"]})
+            # Privacy changes advance the recall floor. A plain confirmation preserves thread continuity.
+            if module_id and row["output"]:
+                prior.append(
+                    {
+                        "role": "assistant",
+                        "text": json.loads(row["output"])["reply"][:1000],
+                    }
+                )
         feedback = c.execute(
             """SELECT module,action FROM feedback WHERE pair=?
             AND (scope='shared' OR (?='private' AND owner=?)) ORDER BY id DESC LIMIT 10""",
@@ -194,10 +233,15 @@ class Records:
         ).fetchall()
         return {
             "profiles": profiles,
+            "speaker": [{"id": a.id}],
             "memories": memories,
-            "modules": self.modules(c, a)[:8],
+            "history": history,
+            "modules": [] if target else self.modules(c, a)[:8],
+            "module_target": [target] if target else [],
             "conversation": prior,
             "feedback": [dict(row) for row in reversed(feedback)],
+            **dp_activity.context(c, a, scope, text),
+            **dp_mandates.context(c, a, scope, text),
         }
 
     def profile_write(self, a, version, data=None, publish=False, action="save"):
@@ -240,7 +284,7 @@ class Records:
     def memory_write(self, a, key, version, value=None, scope=None):
         with self.release_lock, self.db.connection(True) as c:
             row = c.execute(
-                "SELECT version FROM memories WHERE pair=? AND id=? AND owner=?",
+                "SELECT * FROM memories WHERE pair=? AND id=? AND owner=?",
                 (a.pair, key, a.id),
             ).fetchone()
             if not row:
@@ -251,11 +295,15 @@ class Records:
             else:
                 if scope not in ("private", "shared"):
                     invalid()
+                value = text_value(value, 300)
+                dp_recall.remember(c, row, value, scope)
                 c.execute(
                     "UPDATE memories SET version=version+1,scope=?,text=? WHERE pair=? AND id=?",
-                    (scope, text_value(value, 300), a.pair, key),
+                    (scope, value, a.pair, key),
                 )
-            bump_epoch(c, a)
+            bump_epoch(
+                c, a, invalidate_history=value is None or row["scope"] != "candidate"
+            )
 
     def manual_module(self, a, req, kind, title, body):
         item = clean_items([{"module": kind, "title": title, "body": body}])[0]
@@ -297,7 +345,7 @@ class Records:
                     0,
                 ),
             )
-            bump_epoch(c, a)
+            bump_epoch(c, a, invalidate_history=False)
 
     def module_write(self, a, key, version, title, body):
         with self.release_lock, self.db.connection(True) as c:
@@ -334,22 +382,37 @@ class Records:
             if action == "confirm":
                 if not chosen:
                     invalid()
-                for i, item in enumerate(chosen):
+                link = c.execute(
+                    "SELECT module_id,expected FROM dp_targets WHERE draft=?", (key,)
+                ).fetchone()
+                if link:
+                    target = self.module(c, a, link["module_id"])
+                    check_version(target["version"], link["expected"])
+                    if len(chosen) != 1 or chosen[0]["module"] != target["module"]:
+                        invalid()
+                    patch = chosen[0]
                     c.execute(
-                        "INSERT INTO modules VALUES(?,?,?,?,?,?,?,?,?)",
-                        (
-                            secrets.token_hex(12),
-                            a.pair,
-                            a.id,
-                            item["module"],
-                            item["title"],
-                            item["body"],
-                            1,
-                            key,
-                            i,
-                        ),
+                        """UPDATE modules SET title=?,body=?,version=version+1
+                        WHERE pair=? AND id=?""",
+                        (patch["title"], patch["body"], a.pair, target["id"]),
                     )
-                bump_epoch(c, a)
+                else:
+                    for i, item in enumerate(chosen):
+                        c.execute(
+                            "INSERT INTO modules VALUES(?,?,?,?,?,?,?,?,?)",
+                            (
+                                secrets.token_hex(12),
+                                a.pair,
+                                a.id,
+                                item["module"],
+                                item["title"],
+                                item["body"],
+                                1,
+                                key,
+                                i,
+                            ),
+                        )
+                bump_epoch(c, a, invalidate_history=False)
             # Only categories survive; feedback does not retain private message text.
             for kind in {item["module"] for item in current + chosen}:
                 old = [item for item in current if item["module"] == kind]
@@ -370,12 +433,14 @@ class Records:
                 (encode(chosen), next_state, a.pair, key),
             )
 
-    def materialize(self, c, a, req, scope, result):
+    def materialize(self, c, a, req, scope, result, target=None):
         if result["items"]:
+            check_target_items(target, result["items"])
+            key = secrets.token_hex(12)
             c.execute(
                 "INSERT INTO drafts VALUES(?,?,?,?,?,?,?,?)",
                 (
-                    secrets.token_hex(12),
+                    key,
                     a.pair,
                     a.id,
                     scope,
@@ -385,6 +450,11 @@ class Records:
                     req,
                 ),
             )
+            if target:
+                c.execute(
+                    "INSERT INTO dp_targets(draft,module_id,expected) VALUES(?,?,?)",
+                    (key, target["id"], target["version"]),
+                )
         if scope == "private":
             for m in result["memories"]:
                 c.execute(

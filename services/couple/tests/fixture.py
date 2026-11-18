@@ -79,6 +79,37 @@ class FixtureUpstream:
             self.fail_after_post = False
             raise UpstreamError("delivery_unknown", "请刷新对账", 503)
 
+    def generate_game(self, token, sources):
+        self.uid(token)
+        if self.disabled:
+            raise UpstreamError("model_disabled", "合成模型已关闭", 503)
+        with self.lock:
+            self.contexts.append(("game", sources))
+        source = sources[0]
+        anchor = source["body"][:12]
+        prompts = [
+            "回想「%s」，你最想留下什么？",
+            "再遇到「%s」，你想怎样记录？",
+            "和对方聊起「%s」，你想先说什么？",
+        ]
+        options = [
+            ["现场的声音", "当时的画面", "彼此的心情"],
+            ["一起拍照", "写下几句", "留个纪念物"],
+            ["最意外的事", "最开心的一刻", "下次的小愿望"],
+        ]
+        return {
+            "questions": [
+                {
+                    "source_id": source["id"],
+                    "anchor": anchor,
+                    "prompt": q % anchor,
+                    "options": opts,
+                }
+                for q, opts in zip(prompts, options)
+            ],
+            "usage": {"prompt_tokens": 11, "completion_tokens": 20},
+        }
+
     def complete(self, token, scope, text, context):
         self.uid(token)
         if self.disabled:
@@ -105,10 +136,53 @@ class FixtureUpstream:
             ]
         elif "人多" in text:
             memories = ["我不喜欢人多"]
+        reply = "选择安静场所" if quiet else "已收到"
+        if context.get("mandates"):
+            reply = "你们曾托付：" + context["mandates"][0]["task"]
+        if context.get("activity_experiences"):
+            experience = context["activity_experiences"][0]
+            reply = f"参考 {experience['owner']} 的体验：{experience['text']}"
+        if "看展" in text and "吃饭" in text:
+            items = [
+                {
+                    "module": "date",
+                    "title": "一起吃晚饭",
+                    "body": "请两人分别确认晚饭意愿",
+                },
+                {"module": "date", "title": "可选看展", "body": "仅作为可选安排"},
+            ]
+        if (
+            ("平日" in text or "生日" in text)
+            and "预算" in text
+            and not context.get("module_target")
+        ):
+            memories = [text]
+        if "花销" in text or "依据" in text:
+            budget = next(
+                (m for m in context["memories"] if m.get("category") == "usual"), None
+            )
+            if budget:
+                reply = (
+                    f"{budget['owner']}：{budget['quote']}（记录时间 {budget['source_time']}）"
+                )
+        if context.get("module_target"):
+            target = context["module_target"][0]
+            items = []
+            memories = []
+            if any(word in text for word in ("改", "调整", "修改")):
+                items = [
+                    {"module": target["module"], "title": target["title"], "body": text}
+                ]
+            reply = (
+                "正在讨论「"
+                + target["title"]
+                + "」"
+                + ("，已拟好修改草稿" if items else "")
+            )
         if self.bad_output:
             items = [{"module": "outside", "title": "非法", "body": "非法"}]
         return {
-            "reply": "【合成模型回执】" + ("选择安静场所" if quiet else "已收到"),
+            "reply": "【合成模型回执】" + reply,
             "items": items,
             "memories": memories,
             "usage": {"prompt_tokens": 10, "completion_tokens": 12},

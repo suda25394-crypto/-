@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../data/catalog.dart';
 import '../services/cloud_session.dart';
 import 'theme.dart';
+import 'dp_module_chat.dart';
 
 const cloudModules = {
   'date': '约会',
@@ -276,7 +277,10 @@ class _DraftEditorState extends State<DraftEditor> {
       confirm ? '写入共同模块？' : '取消这份草稿？',
       confirm
           ? [
-              '以下 ${items.length} 项将写入共同模块，配对双方都能看到。',
+              if (d['target_id'] != null)
+                '将更新原记录第 ${d['target_version']} 版。配对双方都能看到更新后的内容。'
+              else
+                '以下 ${items.length} 项将写入共同模块，配对双方都能看到。',
               for (final item in items)
                 '${moduleName(item.module)} · ${item.title.text.trim()}\n${item.body.text.trim()}',
             ].join('\n\n')
@@ -326,6 +330,11 @@ class _DraftEditorState extends State<DraftEditor> {
                 ? '共同草稿 · 双方可见'
                 : '私人草稿 · 发布前仅自己可见',
           ),
+          if (widget.draft['target_id'] != null)
+            Text(
+              '修改原记录 · 基于第 ${widget.draft['target_version']} 版',
+              style: editionMeta,
+            ),
           for (final i in items) ...[
             const SizedBox(height: 18),
             Text(moduleName(i.module), style: editionMeta),
@@ -379,7 +388,7 @@ class CloudModuleScreen extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(18),
           children: [
-            const Text('已确认的共同记录 · 配对双方可见', style: editionMeta),
+            const Text('已发布的共同记录 · 点开查看、表态或续聊', style: editionMeta),
             const SizedBox(height: 12),
             if (rows.isEmpty) const Text('还没有记录，可以手动添加，也可以从 AI 草稿确认写入。'),
             for (final m in rows)
@@ -387,12 +396,24 @@ class CloudModuleScreen extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(m['title'].toString()),
                 subtitle: Text(m['body'].toString()),
-                trailing: const Icon(Icons.edit_outlined),
+                trailing: IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: '编辑记录',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CloudModuleEditor(session: session, id: id, row: m),
+                    ),
+                  ),
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        CloudModuleEditor(session: session, id: id, row: m),
+                    builder: (_) => CloudModuleDetail(
+                      session: session,
+                      moduleId: m['id'] as String,
+                    ),
                   ),
                 ),
               ),

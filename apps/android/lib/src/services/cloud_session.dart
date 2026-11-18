@@ -127,12 +127,17 @@ class CloudSession extends ChangeNotifier {
       req.headers['Content-Type'] = 'application/json; charset=utf-8';
       req.bodyBytes = utf8.encode(jsonEncode(body));
     }
+    final modelRequest =
+        method == 'POST' &&
+        (path == '/v1/messages' ||
+            path == '/v1/games' ||
+            path.endsWith('/conversation'));
     late final http.Response response;
     try {
       response = await _client
           .send(req)
           .then(http.Response.fromStream)
-          .timeout(Duration(seconds: path == '/v1/messages' ? 120 : 25));
+          .timeout(Duration(seconds: modelRequest ? 120 : 25));
     } on TimeoutException {
       throw const CloudError('服务响应超时，请检查连接并重试。');
     } on http.ClientException {

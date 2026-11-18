@@ -12,7 +12,7 @@ from pathlib import Path
 
 from cryptography.fernet import Fernet
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS couples (
     id TEXT PRIMARY KEY, channel TEXT NOT NULL, a TEXT NOT NULL, b TEXT NOT NULL,
@@ -113,9 +113,27 @@ class Database:
         with self.connection() as c:
             c.execute("PRAGMA journal_mode=WAL")
             version = c.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, SCHEMA_VERSION):
+            if version not in (0, 1, SCHEMA_VERSION):
                 raise RuntimeError("Unsupported database schema version")
-            c.executescript("BEGIN IMMEDIATE;\n" + SCHEMA)
+            from . import dp_activity, dp_mandates, dp_game, dp_recall
+
+            c.executescript(
+                "BEGIN IMMEDIATE;\n"
+                + SCHEMA
+                + dp_recall.SQL_SCHEMA
+                + dp_activity.SQL_SCHEMA
+                + dp_mandates.SQL_SCHEMA
+                + dp_game.SQL_SCHEMA
+            )
+            columns = {r["name"] for r in c.execute("PRAGMA table_info(chats)")}
+            for name, kind in (("module_id", "TEXT"), ("module_version", "INTEGER")):
+                if name not in columns:
+                    c.execute(f"ALTER TABLE chats ADD COLUMN {name} {kind}")
+            c.execute(
+                "CREATE INDEX IF NOT EXISTS chats_thread ON chats(pair,owner,module_id,at)"
+            )
+            if version < 2:
+                dp_recall.backfill(c)
             c.execute(
                 "INSERT OR IGNORE INTO couples(id,channel,a,b) VALUES(?,?,?,?)",
                 (settings.pair, settings.channel, settings.a, settings.b),

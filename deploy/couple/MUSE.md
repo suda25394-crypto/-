@@ -4,7 +4,7 @@
 
 ## 交付内容和运行条件
 
-- 服务入口 `services.couple.api:app`，每实例一个 worker。容器内端口 8787，主机只绑定 127.0.0.1。数据库位于独立卷 /data，SQLite WAL，启动会创建 schema 1；遇到更高版本拒绝运行。
+- 服务入口 `services.couple.api:app`，每实例一个 worker。容器内端口 8787，主机只绑定 127.0.0.1。数据库位于独立卷 /data，SQLite WAL，首次启动创建 schema 2；读取 schema 1 时会在事务内升级并建立索引。遇到更高版本拒绝运行。
 - Compose 使用既有 WebUI 和 Gateway 共享的外部 Docker 网络，通过服务名称调用。先核对实际服务名、网络、镜像版本、频道 ID 和两个账号 ID。WebUI 适配基准为 0.13.3。若实际 DNS 别名有差异，调整 OPENWEBUI_URL 和 GATEWAY_URL。
 - 源码包的根目录含 services、deploy；Compose 的 build context 相对 deploy/couple 指向根目录。生产镜像仅复制服务 Python 文件，排除测试夹具、APK 和密钥。Dockerfile 固定 Python 基础镜像摘要和依赖散列，限定 Linux x86_64。构建时需要到官方镜像及 Python 包源的出站网络。先记录主机剩余磁盘、内存、现有容器健康和公网根路径状态。
 - 产品私聊与业务数据位于产品库。共同消息保存在既有频道；产品保存上游回执用于归属确认和失败重试。恢复要同时考虑两个存储的时间点。安装包持有产品会话，服务端暂存的上游用户令牌经 Fernet 加密。
@@ -27,7 +27,7 @@ docker compose ps
 curl -fsS http://127.0.0.1:8787/v1/health
 ```
 
-健康回执应有 ok=true、schema=1、mode=live。live 表示生产适配器已加载，模型是否启用由一次实际请求单独核实。在更新 HTTPS 路由前保存本机当前 Funnel 状态。原项目使用 443 根路径代理 Open WebUI。经运维授权，可按当前 tailscale 版本的 --set-path 为产品增加单一路径，例如：
+健康回执应有 ok=true、schema=2、mode=live。live 表示生产适配器已加载，模型是否启用由一次实际请求单独核实。在更新 HTTPS 路由前保存本机当前 Funnel 状态。原项目使用 443 根路径代理 Open WebUI。经运维授权，可按当前 tailscale 版本的 --set-path 为产品增加单一路径，例如：
 
 ```sh
 tailscale funnel status
@@ -60,3 +60,9 @@ docker compose stop product
 ```
 
 确认原 WebUI 根路径、原私网入口和 Gateway 仍正常。历史 SSH 凭据轮换沿原运维待办处理。此交接文件没有执行云端操作。
+
+## D-42 / D-43 隔离送测
+
+此分支对应 APK 0.3.0+3。先在独立目录和独立数据卷演练。如需验证已有数据，使用 v1 数据库的一份一致性备份作为输入；保留 v1 原始备份，以便旧服务恢复。v1 服务不能打开升级后的 schema 2。仅部署隔离测试时，使用测试配对、测试频道、独立会话加密配置、网关配额和路由，避免把合成操作发送到两人当前的真实频道。
+
+模块内续聊独立存放在产品数据库，以配对、模块记录、可见范围及账号校验。普通群聊仍在原生频道。小游戏只把用户选择的共同回忆送给既有模型适配层，作答及揭晓通过产品服务读取。两台手机要填写同一新版产品服务的 HTTPS 基址。验收步骤及合成与真实调用的区分见 [Android 双账号记录](../../planning/ANDROID_DP_D42_D43_RECEIPT.md)。

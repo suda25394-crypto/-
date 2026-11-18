@@ -88,4 +88,7 @@
 
 ### Android 私人测试版
 
-当前可安装版本为 0.2.0+2。可使用离线演示入口体验，也可在 Muse 配置产品服务后通过原有账号登录。代码、测试、APK 签名与真机验收状态见[功能交付回执](planning/ANDROID_FUNCTIONAL_RECEIPT.md)，部署材料见[Muse 交接](deploy/couple/MUSE.md)。
+Muse 交接分支的安装版本为 0.2.0+2。可使用离线演示入口体验，也可在 Muse 配置产品服务后通过原有账号登录。代码、测试、APK 签名与真机验收状态见[功能交付回执](planning/ANDROID_FUNCTIONAL_RECEIPT.md)，部署材料见[Muse 交接](deploy/couple/MUSE.md)。
+
+
+本分支 Android 测试版为 **0.3.0+3**。模块详情支持私人或共同续聊、编辑并确认原记录。另提供活动意愿、情境委托、实际反馈和共同回忆小游戏。新版服务可在本机独立运行。[安装、体验路径与双账号验收](planning/ANDROID_DP_D42_D43_RECEIPT.md)

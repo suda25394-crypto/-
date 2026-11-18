@@ -7,12 +7,19 @@ import secrets
 import time
 from datetime import datetime, timezone, timedelta
 
-from .business import Failure, clean_completion, read_epoch
+from .business import (
+    Failure,
+    check_version,
+    check_target_items,
+    clean_completion,
+    read_epoch,
+)
+from .dp_recall import index_turn
 from .database import encode
 from .upstream import UpstreamError
 
 BEIJING = timezone(timedelta(hours=8))
-MENTION = re.compile(r"(?<![A-Za-z0-9_@])@AI(?![A-Za-z0-9_])", re.IGNORECASE)
+MENTION = re.compile(r"(?<![A-Za-z0-9_@])@(?:AI|DP)(?![A-Za-z0-9_])", re.IGNORECASE)
 
 
 class Conversations:
@@ -20,15 +27,15 @@ class Conversations:
         self.db, self.records, self.upstream = db, records, upstream
 
     @staticmethod
-    def private_history(c, a):
+    def private_history(c, a, module_id=None, scope="private"):
         result = []
         rows = c.execute(
-            """SELECT request_id,input,output,done,at FROM chats WHERE pair=? AND owner=? AND scope='private' ORDER BY at,rowid""",
-            (a.pair, a.id),
+            """SELECT request_id,input,output,done,at,owner FROM chats WHERE pair=? AND (owner=? OR scope='shared') AND scope=? AND module_id IS ? ORDER BY at,rowid""",
+            (a.pair, a.id, scope, module_id),
         )
         for r in rows:
             common = {
-                "owner": a.id,
+                "owner": r["owner"],
                 "created_at": r["at"],
                 "request_id": r["request_id"],
             }
@@ -46,7 +53,7 @@ class Conversations:
                 )
         return result
 
-    def send(self, a, req, scope, text):
+    def send(self, a, req, scope, text, module_id=None, module_version=None):
         key = (a.pair, a.id, req)
         condition = "pair=? AND owner=? AND request_id=?"
         # These IDs contain no application data and are distinct across both actors.
@@ -55,14 +62,22 @@ class Conversations:
         lease = secrets.token_hex(12)
         with self.db.connection(True) as c:
             c.execute(
-                "INSERT OR IGNORE INTO chats(pair,owner,request_id,scope,input,at) VALUES(?,?,?,?,?,?)",
-                (*key, scope, text, now),
+                "INSERT OR IGNORE INTO chats(pair,owner,request_id,scope,input,at,module_id,module_version) VALUES(?,?,?,?,?,?,?,?)",
+                (*key, scope, text, now, module_id, module_version),
             )
             row = c.execute("SELECT * FROM chats WHERE " + condition, key).fetchone()
-            if row["scope"] != scope or row["input"] != text:
+            if (
+                row["scope"],
+                row["input"],
+                row["module_id"],
+                row["module_version"],
+            ) != (scope, text, module_id, module_version):
                 raise Failure(409, "request_mismatch", "同一提交编号已用于其他内容。")
             if row["done"]:
                 return
+            target = self.records.module(c, a, module_id) if module_id else None
+            if target:
+                check_version(target["version"], module_version)
             if row["busy_until"] > now:
                 raise Failure(409, "in_progress", "正在处理这条消息，稍后刷新。")
             if row["uncertain"] and not row["output"]:
@@ -85,22 +100,28 @@ class Conversations:
                 raise Failure(409, "lease_changed", "另一会话正在恢复，请刷新。")
 
         try:
-            if scope == "shared" and not row["posted"]:
+            if scope == "shared" and not module_id and not row["posted"]:
                 self.upstream.channel_post(
                     a.upstream, text, remote_id + "-user", "user"
                 )
                 with self.db.connection(True) as c:
                     change(c, "posted=1")
-            if scope == "shared" and not MENTION.search(text):
+            if scope == "shared" and not module_id and not MENTION.search(text):
                 with self.db.connection(True) as c:
                     change(c, "done=1,epoch=?", read_epoch(c, a))
+                    index_turn(c, *key, text)
                 return
             result = json.loads(row["output"]) if row["output"] else None
             generation_epoch = row["epoch"]
             if result is None:
                 with self.db.connection(True) as c:
                     generation_epoch = read_epoch(c, a)
-                    context = self.records.context(c, a, scope)
+                    if target:
+                        check_version(
+                            self.records.module(c, a, module_id)["version"],
+                            module_version,
+                        )
+                    context = self.records.context(c, a, scope, text, target)
                     day = datetime.now(BEIJING).date().isoformat()
                     count = c.execute(
                         "SELECT count(*) FROM usage WHERE pair=? AND day=? AND outcome!='rejected'",
@@ -162,6 +183,8 @@ class Conversations:
                         ),
                     )
                 result = clean_completion(raw)
+                if target:
+                    check_target_items(target, result["items"])
                 with self.db.connection(True) as c:
                     if read_epoch(c, a) != generation_epoch:
                         change(c, "uncertain=0")
@@ -189,13 +212,14 @@ class Conversations:
                         "context_changed",
                         "授权资料刚刚变化。请重试以使用最新资料。",
                     )
-                if scope == "shared":
+                if scope == "shared" and not module_id:
                     self.upstream.channel_post(
                         a.upstream, result["reply"], remote_id + "-ai", "assistant"
                     )
                 with self.db.connection(True) as c:
                     change(c, "done=1")
-                    self.records.materialize(c, a, req, scope, result)
+                    self.records.materialize(c, a, req, scope, result, target)
+                    index_turn(c, *key, text)
         finally:
             with self.db.connection(True) as c:
                 c.execute(

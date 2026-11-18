@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from .business import Actor, Failure, Records, invalid, text_value
 from .conversations import Conversations
+from . import dp_activity, dp_mandates, dp_game
 from .database import Database, Settings, SCHEMA_VERSION
 from .upstream import Upstream, UpstreamError
 
@@ -83,6 +84,10 @@ class Message(Form):
 
 class Version(Form):
     version: int = Field(ge=0, le=2147483647)
+
+
+class ModuleMessage(Message):
+    version: int = Field(ge=1, le=2147483647)
 
 
 class Profile(Version):
@@ -184,6 +189,8 @@ def create_app(settings=None, upstream=None):
         return principal(request)
 
     A = Depends(actor)
+    for feature in (dp_activity, dp_mandates, dp_game):
+        feature.register(api, actor)
 
     @api.get("/v1/health")
     def health(request: Request):
@@ -264,6 +271,9 @@ def create_app(settings=None, upstream=None):
                 "user": {"id": a.id, "name": a.name},
                 "paired": True,
                 "mode": s.settings.mode,
+                **dp_activity.state(c, a),
+                **dp_mandates.state(c, a),
+                **dp_game.state(c, a),
                 "profiles": s.records.profiles(c, a),
                 "memories": s.records.memories(c, a),
                 "drafts": s.records.drafts(c, a),
@@ -272,6 +282,8 @@ def create_app(settings=None, upstream=None):
                     {
                         "request_id": m["request_id"],
                         "scope": m["scope"],
+                        "module_id": m["module_id"],
+                        "version": m["module_version"],
                         "text": m["input"],
                         "uncertain": bool(
                             m["uncertain"] and m["busy_until"] <= time.time()
@@ -279,7 +291,7 @@ def create_app(settings=None, upstream=None):
                         "busy": m["busy_until"] > time.time(),
                     }
                     for m in c.execute(
-                        "SELECT request_id,scope,input,uncertain,busy_until FROM chats WHERE pair=? AND owner=? AND done=0 ORDER BY rowid",
+                        "SELECT request_id,scope,input,uncertain,busy_until,module_id,module_version FROM chats WHERE pair=? AND owner=? AND done=0 AND (module_id IS NULL OR EXISTS(SELECT 1 FROM modules m WHERE m.id=chats.module_id AND m.pair=chats.pair AND m.version=chats.module_version)) ORDER BY rowid",
                         (a.pair, a.id),
                     )
                 ],
@@ -350,6 +362,38 @@ def create_app(settings=None, upstream=None):
     def edit(key: str, form: ModuleUpdate, request: Request, a: Actor = A):
         request.app.state.records.module_write(
             a, key, form.version, form.title, form.body
+        )
+        return {"ok": True}
+
+    @api.get("/v1/modules/{key}/conversation")
+    def thread(
+        key: str, scope: Literal["private", "shared"], request: Request, a: Actor = A
+    ):
+        s = request.app.state
+        with s.db.connection() as c:
+            c.execute("BEGIN")
+            record = s.records.module(c, a, key)
+            drafts = [
+                d
+                for d in s.records.drafts(c, a)
+                if d.get("target_id") == key and d["scope"] == scope
+            ]
+            return {
+                "record": record,
+                "scope": scope,
+                "messages": s.chat.private_history(c, a, key, scope),
+                "drafts": drafts,
+            }
+
+    @api.post("/v1/modules/{key}/conversation")
+    def continue_thread(key: str, form: ModuleMessage, request: Request, a: Actor = A):
+        request.app.state.chat.send(
+            a,
+            form.request_id,
+            form.scope,
+            text_value(form.text, 2000),
+            key,
+            form.version,
         )
         return {"ok": True}
 
