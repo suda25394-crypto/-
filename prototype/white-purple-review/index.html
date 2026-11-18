@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"><meta name="theme-color" content="#ffffff"><title>双生宇宙 · 交互预览</title>
+<style>
+:root {
+  color-scheme: light;
+  --white: #fff;
+  --ink: #242328;
+  --secondary: #64626b;
+  --rule: #e9e8ec;
+  --line: #d9d7de;
+  --surface: #f5f5f6;
+  --violet: #6939c7;
+  --lilac: #f0ebfc;
+  --lilac-line: #dfd4fa;
+  --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font);
+  color: var(--ink);
+  background: #f6f6f7;
+  -webkit-font-smoothing: antialiased;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { margin: 0; padding: 0; border: 0; background: transparent; text-align: inherit; cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: default; }
+button:focus-visible, label:focus-within, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--violet); outline-offset: -2px;
+}
+[hidden] { display: none !important; }
+h2, h3, p { margin: 0; }
+h2 { font-weight: 650; font-size: 25px; line-height: 1.3; letter-spacing: -.04em; }
+h3 { font-weight: 630; font-size: 16px; line-height: 1.5; }
+#dp-couple-review {
+  min-height: 100vh; min-height: 100dvh; display: grid; place-items: center;
+  padding: clamp(12px, 3vh, 32px) 12px; -webkit-tap-highlight-color: transparent;
+}
+.dp-device {
+  width: min(100%, 440px); height: min(866px, calc(100vh - clamp(24px, 6vh, 64px)));
+  height: min(866px, calc(100dvh - clamp(24px, 6vh, 64px)));
+  display: flex; flex-direction: column; position: relative; isolation: isolate;
+  overflow: hidden; border: 1px solid var(--line); border-radius: 24px;
+  background: var(--white); font-size: 15px; line-height: 1.5; text-align: left;
+}
+.dp-top {
+  flex: none; display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center;
+  padding: max(5px, env(safe-area-inset-top,0px)) 12px 5px;
+  min-height: 55px; border-bottom: 1px solid var(--rule); background: var(--white); z-index: 5;
+}
+.dp-top-title { grid-row: 1; grid-column: 2; justify-self: center; font-size: 17px; font-weight: 660; }
+.dp-top-right { grid-column: 1/-1; justify-self: center; font-size: 11px; color: var(--secondary); }
+.dp-top-right:empty { display: none; }
+.dp-top>button, .rv-header-actions button {
+  min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;
+}
+.dp-top>button { grid-column: 1; grid-row: 1; width: 42px; justify-self: start; }
+.dp-top>button svg { width: 20px; height: 20px; }
+.rv-header-actions { grid-column: 3; grid-row: 1; justify-self: end; display: flex; align-items: center; gap: 1px; }
+.rv-private-entry { gap: 4px; padding: 0 6px; font-size: 14px; font-weight: 600; color: var(--violet); white-space: nowrap; }
+.rv-private-entry svg { width: 14px; height: 14px; }
+.dp-change-bg { padding: 0 6px; font-size: 13px; font-weight: 500; color: var(--secondary); }
+.dp-change-bg svg { display: none; }
+.dp-device[data-route=home] .dp-change-bg { width: 38px; }
+.dp-device[data-route=home] .dp-change-bg svg { display: block; width: 18px; height: 18px; }
+.dp-device[data-route=home] .rv-bg-label { display: none; }
+.dp-main {
+  position: relative; min-height: 0; flex: 1 1 0; overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  padding: 16px 20px max(24px, env(safe-area-inset-bottom,0px));
+}
+.dp-main:focus-visible { outline: none; }
+.dp-device:is([data-route=home],[data-route=private]) .dp-main { padding: 0 16px 16px; }
+.dp-caption,.dp-kicker,.dp-hint,.dp-muted { color: var(--secondary); font-size: 12px; line-height: 1.55; }
+.dp-head { margin: 6px 0 18px; }
+.dp-kicker { margin-bottom: 4px; font-weight: 500; }
+.dp-section { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 23px 0 7px; }
+.dp-section:first-child { margin-top: 4px; }
+.dp-section small { color: var(--secondary); font-size: 11px; }
+.dp-muted,.dp-hint { padding: 8px 0; }
+.dp-list { border-block: 1px solid var(--rule); }
+.dp-row { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 10px 3px; }
+.dp-row+.dp-row,.dp-meta+.dp-meta { border-top: 1px solid var(--rule); }
+.dp-row-body { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.dp-row-body strong { font-size: 14px; font-weight: 540; overflow-wrap: anywhere; }
+.dp-arrow { margin-left: auto; color: var(--secondary); font: 20px/1 Arial,sans-serif; }
+.dp-sheet { padding: 12px 0; overflow-wrap: anywhere; }
+.dp-sheet p+p { margin-top: 8px; }
+.dp-meta { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; font-size: 14px; }
+.dp-meta span { color: var(--secondary); }
+.dp-meta strong { font-weight: 560; text-align: right; }
+.dp-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-block: 1px solid var(--rule); padding: 6px 0; }
+.dp-tile { display: grid; align-content: center; justify-items: center; gap: 6px; min-height: 67px; border-radius: 7px; color: var(--ink); font-size: 12px; }
+.dp-symbol { display: inline-grid; place-items: center; width: 25px; height: 25px; font: 20px/1 Arial,sans-serif; color: var(--ink); }
+.dp-symbol svg { width: 22px; height: 22px; stroke-width: 1.55; }
+@media(hover:hover) {
+  .dp-tile:hover,.dp-row:hover,.rv-dock button:hover,.rv-header-actions button:hover { background: var(--surface); }
+}
+.dp-feature {
+  display: block; position: relative; width: 100%; text-align: left; border: 1px solid var(--rule); border-radius: 12px;
+  overflow: hidden; background: var(--white);
+}
+.dp-feature canvas { display: block; width: 100%; height: 147px; object-fit: cover; object-position: center 43%; }
+.dp-feature-body { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px 13px; }
+.dp-feature .dp-kicker,.dp-feature .dp-caption { display: block; }
+.dp-feature .dp-kicker { margin: 0; font-size: 11px; }
+.dp-feature h2 { margin: 1px 0 3px; font-size: 21px; }
+.dp-feature-open { color:var(--violet); font-size: 21px; padding-right: 2px; }
+.dp-hero,.dp-scene,.dp-memory-cover,.dp-book-cover { overflow: hidden; border-radius: 10px; background: var(--surface); }
+.dp-hero { margin: 6px 0 10px; }
+.dp-hero canvas,.dp-scene canvas { display: block; width: 100%; height: auto; }
+.dp-hero canvas { max-height: 180px; object-fit: cover; }
+.dp-scene { position: relative; }
+.dp-pin { position: absolute; transform: translate(-50%,-50%); width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--lilac-line); background: var(--white); color: var(--violet); text-align: center; font-size: 18px; }
+.dp-pin::after { content: ""; position: absolute; inset: -4px; }
+.dp-pin:not(.second):not(.third) { left: 77%; top: 37%; }
+.dp-pin.second { left: 16%; top: 66%; }
+.dp-pin.third { left: 44%; top: 54%; }
+.dp-float-note { margin-top: 16px; }
+.dp-float-note .dp-section { margin: 0 0 5px; }
+.dp-float-note p { color: var(--secondary); font-size: 14px; }
+.dp-memory-cover { position: relative; isolation: isolate; min-height: 108px; display: flex; align-items: flex-end; padding: 12px; background: #f6f4fa; }
+.dp-memory-cover::before,.dp-memory-cover::after { content: ""; position: absolute; z-index: -1; inset: 10% -8% -2%; background: #e6e0f0; clip-path: polygon(0 75%, 24% 46%, 52% 68%, 80% 20%, 100% 47%, 100% 100%, 0 100%); }
+.dp-memory-cover::after { background: #d7cbe9; transform: translate(12%,24%); }
+.dp-memory-cover b { color: var(--ink); background: var(--white); padding: 2px 7px; border-radius: 4px; font-size: 12px; font-weight: 550; }
+.dp-book-cover { display: flex; align-items: flex-end; gap: 7px; min-height: 108px; padding: 16px; background: #f2eff7; }
+.dp-book-cover i { width: 23%; height: 36px; border: 1px solid #b1a8c0; border-left: 6px solid #716980; border-radius: 1px; transform: skewY(-6deg); background: var(--white); }
+.dp-book-cover i:nth-child(2){height: 53px; border-left-color: var(--violet); transform: rotate(-6deg) skewY(-3deg);}
+.dp-book-cover i:nth-child(3){height: 42px; border-left-color: #aaa6b0;}
+.dp-tabs { display: flex; gap: 3px; margin: 8px 0 15px; padding: 3px; border-radius: 9px; background: var(--surface); }
+.dp-tabs button { flex: 1; text-align: center; min-height: 37px; padding: 4px; border-radius: 6px; font-size: 14px; color: var(--secondary); }
+.dp-tabs [aria-pressed=true] { color: var(--violet); background: var(--white); font-weight: 600; }
+.dp-primary,.dp-secondary,.dp-compose button,.dp-bg-actions button,.dp-bg-file-label { min-height: 44px; border-radius: 9px; padding: 9px 13px; text-align: center; font-size: 14px; font-weight: 600; }
+.dp-primary,.dp-secondary { display: block; width: 100%; }
+.dp-primary,.dp-compose button,.dp-bg-actions [data-bg-action=apply] { background: var(--violet); color: var(--white); }
+.dp-secondary,.dp-bg-file-label { background: var(--surface); color: var(--ink); }
+.dp-action { margin-top: 16px; }
+.dp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; }
+.dp-soft { display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; min-height: 42px; color: var(--violet); font-size: 14px; font-weight: 550; }
+.dp-assist { width: 100%; display: flex; align-items: center; gap: 9px; min-height: 46px; margin-top: 18px; border-top: 1px solid var(--rule); color: var(--violet); font-size: 14px; }
+.dp-assist b { display: inline-grid; place-items: center; height: 25px; min-width: 29px; border-radius: 6px; background: var(--lilac); font-size: 11px; }
+.dp-assist span:last-child { margin-left: auto; }
+.dp-field { display: grid; gap: 5px; margin: 12px 0; color: var(--secondary); font-size: 13px; }
+.dp-field :is(input,textarea,select),.dp-compose input,.rv-input { width: 100%; min-width:0; border: 1px solid var(--line); background: var(--white); border-radius: 9px; color: var(--ink); padding: 9px 11px; font-size: 16px; line-height: 1.5; }
+.dp-field textarea { min-height: 80px; resize: vertical; }
+.dp-compose { display: flex; align-items: center; gap: 8px; margin: 12px 0 5px; }
+.dp-compose button { flex: none; }
+.dp-warning,.dp-bg-note,.dp-bg-status { color: var(--ink); font-size: 12px; }
+.dp-warning:not(:empty) { border-left: 2px solid var(--violet); margin-top: 8px; padding-left: 8px; }
+.rv-personal-heading,.paper-head { display: flex; align-items: center; gap: 13px; margin: 10px 0 21px; }
+.rv-personal-heading h2 { font-size: 22px; }
+.rv-personal-heading p { margin-top: 3px; color: var(--secondary); font-size: 13px; }
+.paper-head .dp-head { margin: 0; }
+.paper-id,.rv-avatar,.dp-avatar { display: inline-grid; flex: none; place-items: center; width: 31px; height: 31px; border-radius: 50%; color: var(--ink); background: var(--surface); font-size: 18px; }
+.paper-head .paper-id,.rv-personal-heading .paper-id { width: 46px; height: 46px; font-size: 26px; }
+.rv-avatar.mine,.paper-id:not(.partner) { color: var(--violet); background: var(--lilac); }
+.rv-avatar.dp,.dp-avatar { color: var(--white); background: var(--violet); font-size: 11px; font-weight: 600; }
+.rv-avatar svg { width: 20px; height: 20px; }
+.rv-thread { display: flex; flex-direction: column; gap: 15px; padding: 13px 0 6px; }
+.rv-privacy,.rv-date { align-self: center; color: var(--secondary); font-size: 11px; line-height: 1.5; text-align: center; }
+.rv-privacy { display: flex; align-items: center; gap: 5px; }
+.rv-privacy svg { width: 12px; height: 12px; }
+.rv-privacy i { font-style: normal; }
+.rv-demo-link { padding: 4px 0; color: var(--secondary); text-decoration: underline; text-underline-offset: 2px; }
+.rv-chat,.dp-message { display: flex; align-items: flex-start; gap: 8px; }
+.rv-chat.is-mine { flex-direction: row-reverse; }
+.dp-message { margin: 12px 0; }
+.dp-message.mine { justify-content: flex-end; }
+.rv-msg { max-width: min(82%,306px); min-width: 0; }
+.rv-author { display: block; margin: -1px 1px 3px; color: var(--secondary); font-size: 11px; }
+.rv-chat.is-mine .rv-author { text-align: right; }
+.rv-bubble,.dp-bubble { display: inline-block; padding: 9px 12px; border-radius: 4px 13px 13px; color: var(--ink); background: var(--surface); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.6; }
+.dp-bubble { max-width: 85%; }
+.rv-chat.is-mine .rv-bubble,.dp-message.mine .dp-bubble { background: var(--lilac); border-radius: 13px 4px 13px 13px; }
+.rv-chat.is-dp .rv-bubble { background: var(--white); border: 1px solid var(--rule); }
+.rv-plan { display: flex; width: min(100%,310px); overflow: hidden; background: var(--white); border: 1px solid var(--rule); border-radius: 10px; color: var(--ink); }
+.rv-thread>.rv-plan { margin-left: 39px; width: min(calc(100% - 39px),310px); }
+.rv-plan-art { position: relative; flex: 0 0 29%; min-height: 79px; overflow: hidden; background: var(--lilac); }
+.rv-plan-art canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rv-plan-body { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 8px 12px; }
+.rv-plan-body strong { font-size: 17px; font-weight: 630; }
+.rv-plan-body span,.rv-plan-body small { color: var(--secondary); font-size: 12px; overflow-wrap: anywhere; }
+.rv-editor { flex: none; display: flex; align-items: flex-end; gap: 7px; padding: 7px 11px max(8px,env(safe-area-inset-bottom)); background: var(--white); border-top: 1px solid var(--rule); }
+.rv-editor button { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; }
+.rv-editor button svg { width: 20px; height: 20px; }
+.rv-editor .rv-send { background: var(--violet); color: var(--white); }
+.rv-editor .rv-send:disabled { color: var(--secondary); background: var(--surface); }
+.rv-input { flex: 1; display: block; height: 42px; max-height: 92px; resize: none; border: 0; border-radius: 11px; background: var(--surface); }
+.rv-input::placeholder { color: var(--secondary); }
+.rv-menu { flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--rule); background: var(--white); }
+.rv-menu button { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 4px 10px; color: var(--violet); font-size: 13px; }
+.rv-menu svg { width: 16px; height: 16px; }
+.rv-dock { flex: none; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 3px 6px max(3px,env(safe-area-inset-bottom)); background: var(--white); border-top: 1px solid var(--rule); }
+.rv-dock button { min-height: 49px; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 2px; border-radius: 7px; text-align: center; font-size: 12px; line-height: 16px; color: var(--secondary); }
+.rv-dock svg { width: 21px; height: 21px; }
+.rv-dock [aria-current=page] { color: var(--violet); font-weight: 650; }
+.rv-dock [aria-current=page] svg { fill: var(--lilac); stroke-width: 1.95; }
+.dp-personal-bg { display: none; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+[data-wall=photo] .dp-personal-bg { display: block; }
+.dp-personal-bg img { display: block; width: 100%; height: 100%; object-fit: cover; }
+[data-wall=photo] :is(.rv-privacy,.rv-date,.rv-author,.dp-head,.dp-section,.dp-list,.dp-grid,.dp-sheet,.dp-assist,.dp-muted,.dp-float-note,.dp-warning,.dp-field,.paper-head,.rv-personal-heading,.dp-soft,.dp-hint) { background: var(--white); border-radius: 6px; }
+[data-wall=photo] :is(.rv-privacy,.rv-date,.rv-author,.dp-soft,.dp-warning) { padding: 1px 6px; }
+[data-wall=photo] .rv-author { display: table; margin-bottom: 3px; }
+[data-wall=photo] .is-mine .rv-author { margin-left: auto; }
+[data-wall=photo] :is(.dp-head,.dp-section,.dp-list,.dp-grid,.dp-sheet,.dp-assist,.dp-float-note,.dp-field,.paper-head,.rv-personal-heading) { padding: 5px 8px; }
+.dp-bg-editor,.rv-demo-panel { z-index: 8; background: var(--white); border: 1px solid var(--line); border-radius: 12px; }
+.dp-bg-editor { flex: none; max-height: 43%; overflow-y: auto; margin: 6px 12px; padding: 13px; }
+.dp-edit-head,.dp-bg-tools,.dp-bg-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.dp-edit-head small,.dp-bg-tools button { color: var(--secondary); font-size: 12px; }
+.dp-bg-tools,.dp-bg-actions { margin-top: 9px; }
+.dp-bg-file-label { position: relative; display: inline-flex; align-items: center; overflow: hidden; }
+.dp-bg-tools button { min-height: 44px; padding-inline: 6px; }
+.dp-bg-actions { justify-content: flex-end; border-top: 1px solid var(--rule); padding-top: 8px; }
+.dp-bg-file-label input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.dp-bg-note { margin-top: 6px; color: var(--secondary); }
+.dp-bg-status:not(:empty) { padding: 5px 12px; background: var(--white); }
+.rv-demo-panel { position: absolute; left: 14px; right: 14px; top: 64px; padding: 16px; }
+.rv-demo-panel p { margin: 6px 0 12px; font-size: 14px; }
+@media(max-width:520px) {
+  #dp-couple-review { display: block; min-height: 0; padding: 0; background: var(--white); }
+  .dp-device { width: 100%; height: 100vh; height: 100dvh; border: 0; border-radius: 0; }
+}
+@media(max-width:354px) {
+  .dp-main { padding-inline: 13px; }
+  .dp-device:is([data-route=home],[data-route=private]) .dp-main,.dp-top { padding-inline: 9px; }
+}
+@media(max-width:600px),(pointer:coarse) {
+  .dp-device[data-typing=yes] .rv-dock { display: none; }
+}
+</style></head><body>
+<div id="dp-couple-review">
+  <div class="dp-device" lang="zh-CN" aria-label="双生宇宙 · 手机交互选稿">
+    <div class="dp-personal-bg" aria-hidden="true"><img alt=""></div>
+    <header class="dp-top">
+      <button type="button" data-act="back" aria-label="返回上一页" hidden>‹</button>
+      <strong class="dp-top-title">我们仨</strong>
+      <div class="rv-header-actions">
+        <button type="button" class="dp-change-bg cursor-interaction" data-act="background" aria-label="换背景" title="换背景" aria-expanded="false"><span class="rv-bg-label">换背景</span></button>
+        <button type="button" class="rv-private-entry" data-act="go:private" aria-label="和 DP 私聊">私聊</button>
+      </div>
+      <span class="dp-top-right"></span>
+    </header>
+    <section class="dp-bg-editor" aria-label="换背景" hidden>
+      <div class="dp-edit-head"><strong>我的背景</strong><small>仅自己可见</small></div>
+      <div class="dp-bg-tools"><label class="dp-bg-file-label cursor-interaction" role="button">从相册选择<input type="file" data-bg-file accept="image/*" aria-label="从相册选择背景图片"></label><button type="button" class="cursor-interaction" data-bg-action="reset">恢复默认</button></div>
+      <p class="dp-bg-note" aria-live="polite"></p>
+      <div class="dp-bg-actions"><button type="button" class="cursor-interaction" data-bg-action="cancel">取消</button><button type="button" class="cursor-interaction" data-bg-action="apply">应用背景</button></div>
+    </section>
+    <div class="dp-bg-status" role="status"></div>
+    <main class="dp-main" aria-label="当前页面"></main>
+    <div class="rv-menu" hidden></div>
+    <form class="rv-editor" data-submit="sendHome" hidden aria-label="聊天输入栏">
+      <button type="button" class="rv-more" data-act="chatTools" aria-expanded="false" aria-label="更多聊天操作"></button>
+      <textarea class="rv-input" rows="1" name="homeMessage" maxlength="500" placeholder="发到我们仨，@DP 可提问…" aria-label="发到我们仨"></textarea>
+      <button type="submit" class="rv-send" aria-label="发送消息">发送</button>
+    </form>
+    <nav class="rv-dock" aria-label="底部主导航"></nav>
+  </div>
+  
+</div>
+<script>
+(() => {
+ const root=document.getElementById('dp-couple-review');
+ const main=root.querySelector('.dp-main'), top=root.querySelector('.dp-top-title'), topRight=root.querySelector('.dp-top-right');
+ const device=root.querySelector('.dp-device'),photoLayer=root.querySelector('.dp-personal-bg img'),bgPanel=root.querySelector('.dp-bg-editor'),bgButton=root.querySelector('.dp-change-bg'),fileInput=root.querySelector('[data-bg-file]'),bgNote=root.querySelector('.dp-bg-note'),bgStatus=root.querySelector('.dp-bg-status');
+ const storageKey='dp-couple-review-backdrop-v1';
+ let savedPhoto='',draftPhoto='',pickVersion=0,loadingPhoto=false;
+ try{const v=localStorage.getItem(storageKey);if(v&&v.startsWith('data:image/jpeg;base64,'))savedPhoto=v;}catch{}
+ function renderPhoto(data){
+  device.dataset.wall=data?'photo':'default';
+  if(data){photoLayer.src=data;}else{photoLayer.removeAttribute('src');}
+ }
+ function note(text,busy=false){bgNote.textContent=text;loadingPhoto=busy;bgPanel.querySelector('[data-bg-action="apply"]').disabled=busy;}
+ function editWallpaper(){
+  if(!bgPanel.hidden)return;
+  draftPhoto=savedPhoto;fileInput.value='';bgStatus.textContent='';
+  note('在下方预览聊天和功能页的个人底图。');
+  bgPanel.hidden=false;bgButton.setAttribute('aria-expanded','true');fileInput.focus({preventScroll:true});
+ }
+ function dismissWallpaper(commit){
+  if(commit&&loadingPhoto)return;
+  pickVersion++;
+  if(commit){savedPhoto=draftPhoto;let persisted=true;try{if(savedPhoto)localStorage.setItem(storageKey,savedPhoto);else localStorage.removeItem(storageKey);}catch{persisted=false;}
+   bgStatus.textContent=persisted?(savedPhoto?'已应用个人背景':'已恢复默认背景'):'已应用到本次预览';}
+  renderPhoto(savedPhoto);bgPanel.hidden=true;bgButton.setAttribute('aria-expanded','false');fileInput.value='';note('');bgButton.focus({preventScroll:true});
+ }
+ async function previewUpload(file){
+  if(!file)return;
+  const version=++pickVersion;
+  if(file.type&&!file.type.startsWith('image/')){note('请选择能打开的图片，例如 JPG、PNG 或 WebP。');return;}
+  let objectURL='';
+  try{
+   note('正在读取图片…',true);
+   objectURL=URL.createObjectURL(file);const img=new Image();img.src=objectURL;await img.decode();
+   if(version!==pickVersion)return;
+   const ratio=Math.min(1,1440/Math.max(img.naturalWidth,img.naturalHeight));
+   const scratch=document.createElement('canvas');scratch.width=Math.max(1,Math.round(img.naturalWidth*ratio));scratch.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+   const pen=scratch.getContext('2d');pen.fillStyle='#ffffff';pen.fillRect(0,0,scratch.width,scratch.height);pen.drawImage(img,0,0,scratch.width,scratch.height);
+   draftPhoto=scratch.toDataURL('image/jpeg',.82);renderPhoto(draftPhoto);note('当前为预览，点「应用背景」保存。');
+  }catch{if(version===pickVersion)note('这张图暂时无法读取，请换一张 JPG、PNG 或 WebP 图片。');}
+  finally{if(objectURL)URL.revokeObjectURL(objectURL);if(version===pickVersion)fileInput.value='';}
+ }
+ renderPhoto(savedPhoto);
+ const modules={
+  date:['约会','ticket','◫'],wish:['心愿','sparkles','✧'],calendar:['共同日程','calendar-days','▤'],memory:['共同记忆','book-heart','◇'],
+  universe:['小宇宙','orbit','◎'],album:['情侣相册','images','▧'],game:['互动游戏','gamepad-2','⊞'],talk:['关系沟通','messages-square','▱'],
+  food:['美食','utensils','♧'],travel:['旅行','compass','⊙'],surprise:['惊喜','party-popper','✲'],gift:['礼物灵感','gift','⊡']
+ };
+ const models={
+   food:{eyebrow:'今晚吃什么',title:'一锅番茄鸡蛋面',details:[['口味','清淡一点'],['准备','番茄、鸡蛋和挂面'],['时间','约 20 分钟']],act:'加入今晚的备选',done:'已放进今晚的备选'},
+   travel:{eyebrow:'周末备选',title:'坐慢车去海边',details:[['范围','周末往返'],['路线草稿','车站 → 海边 → 旧书摊'],['想商量','交通和两人的预算']],act:'存成旅行备选',done:'已存为旅行备选'},
+   surprise:{eyebrow:'私密草稿',title:'一张展览后的明信片',details:[['写给','我的伴侣'],['交付','自己决定什么时候送'],['灵感','把那天最喜欢的颜色写下来']],act:'保存惊喜草稿',done:'已存入私人草稿'},
+   gift:{eyebrow:'送礼备忘',title:'一套展览明信片',details:[['线索','一起提过，想留下喜欢的展品'],['预算','30 元以内'],['来源','共同聊天中的看展计划']],act:'收藏这个灵感',done:'已存入私人收藏'}
+ };
+ const state={route:'home',history:[],profileTab:'me',guide:'',editing:0,plan:{time:'14:00',place:'市美术馆东门',me:false,partner:false},wish:false,finished:false,memories:[{name:'沿江慢慢走',note:'那天回去时，两个人都把步子放慢了一点。',date:'11 月 15 日'}],profiles:[{title:'逛展时，我喜欢慢慢看。',scope:'双方可见'},{title:'有心事时，我想先被听一会儿。',scope:'仅自己可见'}],selectedMem:0,world:'books',saved:{},guideText:'',logs:{},talk:'',game:'',module:'',msg:''};
+ state.memories.push({name:'旧书摊的午后',note:'那天淘到了一本旧画册。等结账的时候，我们还在翻那张跨页插画。',date:'11 月 14 日'});
+ const partnerProfile=[{title:'喜欢有手写标注的旧画册',scope:'伴侣分享给我'},{title:'看完展，想留一会儿慢慢走',scope:'伴侣分享给我'}];
+ const bookCover='<div class="dp-book-cover" role="img" aria-label="书摊上的几册旧画集"><i></i><i></i><i></i></div>';
+ const escape=value=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+ const clip=value=>String(value||'').trim().slice(0,260);
+ function button(action,label,cls='',attr=''){return '<button type="button" class="'+cls+' cursor-interaction" data-act="'+action+'" '+attr+'>'+label+'</button>';}
+ function valueOf(name){const element=main.querySelector('[name="'+name+'"]');return element?clip(element.value):'';}
+ const heading=(k,t)=>'<div class="dp-head"><div class="dp-kicker">'+k+'</div><h2>'+escape(t)+'</h2></div>';
+ const section=(t,s='')=>'<div class="dp-section"><h3>'+t+'</h3><small>'+s+'</small></div>';
+ const primary=(a,t)=>'<div class="dp-action">'+button(a,t,'dp-primary')+'</div>';
+ const meta=items=>'<div class="dp-sheet">'+items.map(([a,b])=>'<div class="dp-meta"><span>'+escape(a)+'</span><strong>'+escape(b)+'</strong></div>').join('')+'</div>';
+ const art=(style)=>'<canvas data-art="'+style+'" class="'+(style==='gallery'?'dp-gallery':'')+'" role="img" aria-label="'+({thumb:'白纸上折起的紫色银杏',wide:'银杏与拱窗的剪纸插画',gallery:'紫色银杏与展馆拱窗的剪纸海报',world:'纸片小岛，上面有水岸步道、旧书摊和观察站'}[style])+'"></canvas>';
+ const identity=who=>'<span class="paper-id '+(who==='伴侣'?'partner':'')+'" aria-hidden="true">'+(who==='伴侣'?'✦':'☾')+'</span>';
+ const outlines={
+  grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  ticket:'<path d="M3 7.2a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.4a2.5 2.5 0 0 0 0 4.9v2.3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.3a2.5 2.5 0 0 0 0-4.9Z"/><path d="M15 7.7v1.6m0 2v1.6m0 2v1.6"/>',
+  sparkles:'<path d="m10 3 1.7 5.4L17 10l-5.3 1.7L10 17l-1.7-5.3L3 10l5.3-1.6ZM18 14l.8 2.3L21 17l-2.2.7L18 20l-.8-2.3L15 17l2.2-.7Z"/>',
+  'calendar-days':'<rect x="3.5" y="5" width="17" height="16" rx="3"/><path d="M7 3v4m10-4v4M4 10h16m-12 4h2m4 3h2"/>',
+  'book-heart':'<path d="M3 5c3-1.3 6-.8 9 1.2C15 4.2 18 3.7 21 5v14c-3-1.1-6-.7-9 1.1-3-1.8-6-2.3-9-1.1ZM12 6.2V20"/>',
+  orbit:'<circle cx="12" cy="12" r="7.7"/><ellipse cx="12" cy="12" rx="11" ry="3.4" transform="rotate(-26 12 12)"/>',
+  images:'<rect x="6" y="3.5" width="15" height="14" rx="2.3"/><path d="m7 14 4.4-4.3 2.7 2.5 2.3-2 4 3.4M3 8v10a2 2 0 0 0 2 2h11"/><circle cx="16.5" cy="7.5" r=".7"/>',
+  'gamepad-2':'<path d="M7 7h10c2.5 0 3.4 2.7 4.1 7.6.5 3.3-1.8 4.9-4 2.6l-1.7-1.7H8.6l-1.7 1.7c-2.2 2.3-4.5.7-4-2.6C3.6 9.7 4.5 7 7 7Z"/><path d="M6.2 11.5h4m-2-2v4m6.4-1.4h.1m2.4-1.4h.1"/>',
+  'messages-square':'<path d="M18.5 12a3 3 0 0 1-3 3h-6l-4 3v-3.5A3 3 0 0 1 3 11.6V6.5a3 3 0 0 1 3-3h9.5a3 3 0 0 1 3 3Z"/><path d="M9 18h6.5l3 2.5V18a2.5 2.5 0 0 0 2.5-2.5V9"/>',
+  utensils:'<path d="M4 3v5c0 3 5 3 5 0V3M6.5 3v18M16 13h4V3c-2.6 1-4 4.4-4 8Zm4-1v9"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="m16.7 7.3-3.1 6.3-6.3 3.1 3.1-6.3Z"/>',
+  'party-popper':'<path d="m3 21 4.6-13.1 8.5 8.5ZM8.8 15.3l1.3 3.2m2.2-13 1.1-2m2.2 5.7 4-3.2m-1.4 6.5 2.2-.5"/>',
+  gift:'<rect x="3" y="8" width="18" height="4.6" rx="1.2"/><path d="M5.2 12.6v7.8h13.6v-7.8M12 8v12"/><path d="M12 8C7.2 8 5.5 6.7 6.3 4.5c1.1-2.6 4.7-1.3 5.7 3.5Zm0 0c4.8 0 6.5-1.3 5.7-3.5C16.6 1.9 13 3.2 12 8Z"/>',
+  sunrise:'<path d="M3 17h18m-18 3h18M7 15a5 5 0 0 1 10 0M12 3v3m-8 2 2.2 2.1M20 8l-2.2 2.1"/>',
+  dp:'<path d="M16 8.2c-2.6-3-6.8-3.3-9.4-.5s-2.2 7 .4 9.2"/><path d="M8 15.8c2.6 3 6.8 3.3 9.4.5s2.2-7-.4-9.2"/>',
+  lock:'<rect x="6" y="10" width="12" height="10" rx="2"/><path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3"/>',
+  link:'<path d="m9 15 6-6m-5 8-1 1a4 4 0 0 1-5.6-5.6l3-3a4 4 0 0 1 5.6 0m0 5.2a4 4 0 0 0 5.6 0l3-3A4 4 0 0 0 15 5l-1 1"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',chevron:'<path d="m14 5-7 7 7 7"/>',
+  pen:'<path d="m4 17 1 3 3-1L20 7l-3-3ZM14.7 6.3l3 3"/>',
+  notebook:'<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18m3-12h5m-5 4h4"/>'
+ };
+ function glyph(name){return '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+(outlines[name]||'')+'</svg>';}
+ const icon=(name,fallback)=>'<span class="dp-symbol" aria-hidden="true">'+(outlines[name]?glyph(name):fallback)+'</span>';
+ function row(a,t,sub,mark=''){return button(a,mark+'<span class="dp-row-body"><strong>'+escape(t)+'</strong>'+(sub?'<small class="dp-caption">'+escape(sub)+'</small>':'')+'</span><span class="dp-arrow">›</span>','dp-row');}
+ const tabs=(list,active)=>'<div class="dp-tabs">'+list.map(([key,t])=>button(key,t,'','aria-pressed="'+(key===active)+'"')).join('')+'</div>';
+ const help=(a,t='和 DP 聊聊这个')=>button('dp:'+a,'<b>DP</b><span>'+t+'</span><span>↗</span>','dp-assist');
+ const field=(label,name,value,multi=false)=>'<label class="dp-field">'+label+(multi?'<textarea name="'+name+'" maxlength="260">'+escape(value)+'</textarea>':'<input name="'+name+'" maxlength="80" value="'+escape(value)+'">')+'</label>';
+ const warning=()=>state.msg?'<div class="dp-warning" role="alert">'+escape(state.msg)+'</div>':'';
+ const ticket=(act='go:plan')=>button(act,art('gallery')+'<span class="dp-feature-body"><span><span class="dp-kicker">共同日程 · 周六</span><h2>周六看展</h2><span class="dp-caption">'+escape(state.plan.time)+' · '+escape(state.plan.place)+'</span></span><span class="dp-feature-open" aria-hidden="true">↗</span></span>','dp-feature');
+ const inbox=(who,text)=>'<div class="dp-message '+(who==='我'?'mine':'')+'">'+(who==='我'?'':who==='伴侣'?identity(who):'<span class="dp-avatar">'+escape(who)+'</span>')+'<span class="dp-bubble">'+escape(text)+'</span></div>';
+ const compose=(a,label)=>'<form class="dp-compose" data-submit="'+a+'"><input aria-label="'+label+'" name="message" maxlength="260" autocomplete="off" placeholder="'+label+'"><button class="cursor-interaction">发送</button></form>';
+ const assistantLabels={plan:'这份约会计划',wish:'这一个心愿',memory:'这段共同经历',universe:'这座观察站',album:'这本相册',game:'这局游戏',talk:'这段私下梳理',profile:'我的档案',food:'今晚的菜单',travel:'这次旅行',gift:'这个礼物灵感',surprise:'这份惊喜'};
+ const contextOpening={plan:'目前约在周六 '+state.plan.time+'。你想改几点，还是想换个碰头的地方？',wish:'想把哪一件事约到具体的一天？',memory:'如果只留一句话，你最想记住哪个细节？',universe:'你想听观察站的故事，还是回到步道那天？',talk:'你可以先把刚才最想说的一句话写在这里。',game:'你想再聊聊这道题，还是一起想一个心愿？',profile:'最近有什么关于你的偏好，希望我重新了解？'};
+ const basicReply={food:'可以把你们想吃的加进今晚的备选。',travel:'先商量一个能一起出发的周末，再核对路线和预算。',gift:'可以先记下这个灵感，等接近纪念日时再决定。',surprise:'这份草稿保存在你的私人空间，由你决定怎样送出。',album:'可以给这组画面留下一句两个人都愿意分享的图注。'};
+ const chatInput=root.querySelector('.rv-input'),editor=root.querySelector('.rv-editor'),menu=root.querySelector('.rv-menu');
+ const more=root.querySelector('.rv-more'),send=root.querySelector('.rv-send'),backButton=root.querySelector('[data-act="back"]');
+ const privateEntry=root.querySelector('.rv-private-entry');
+ const primaryRoutes=[['home','聊天','messages-square'],['directory','功能','grid'],['daily','日常','calendar-days'],['mine','我的','notebook']];
+ const dock=root.querySelector('.rv-dock');
+ dock.innerHTML=primaryRoutes.map(([id,label,mark])=>button('tab:'+id,glyph(mark)+'<span>'+label+'</span>','', 'data-tab="'+id+'"')).join('');
+ privateEntry.innerHTML=glyph('lock')+'私聊';
+ bgButton.insertAdjacentHTML('afterbegin',glyph('images'));
+ more.innerHTML=glyph('plus');
+ send.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>';
+ const chats={private:[],group:[]}, drafts={private:'',group:''}, threadScroll={private:0,group:0};
+ const savedKeys=['plan','wish','finished','profiles','memories','saved','talk','guideText','game','guess','logs','albumCaption'];
+ const sessionKey='couple-design-review-local-v2';
+ function remember(){
+  try{
+   const business=Object.fromEntries(savedKeys.filter(k=>state[k]!==undefined).map(k=>[k,state[k]]));
+   localStorage.setItem(sessionKey,JSON.stringify({business,chats,drafts}));
+  }catch{}
+ }
+ try{
+  const snapshot=JSON.parse(localStorage.getItem(sessionKey)||'null');
+  if(snapshot?.business){for(const k of savedKeys)if(Object.prototype.hasOwnProperty.call(snapshot.business,k))state[k]=snapshot.business[k];}
+  for(const mode of ['private','group']){
+   if(Array.isArray(snapshot?.chats?.[mode]))chats[mode]=snapshot.chats[mode];
+   if(typeof snapshot?.drafts?.[mode]==='string')drafts[mode]=snapshot.drafts[mode].slice(0,500);
+  }
+ }catch{}
+ function isChat(route=state.route){return route==='home'||route==='private';}
+ function chatChannel(){return state.route==='private'?'private':'group';}
+ function locationState(){return {couplePreview:true,route:state.route,stack:state.history.slice(),selected:state.selectedMem,editing:state.editing,module:state.module};}
+ let nativeHistory=true;
+ function syncLocation(replace){
+  if(!nativeHistory)return;
+  try{window.history[replace?'replaceState':'pushState'](locationState(),'');}catch{nativeHistory=false;}
+ }
+ function beforeNavigate(){if(isChat())threadScroll[chatChannel()]=main.scrollTop;if(chatInput===document.activeElement)chatInput.blur();state.menuOpen=false;closeNote();}
+ function navigate(route){beforeNavigate();state.history.push(state.route);state.route=route;state.msg='';syncLocation(false);draw();main.scrollTop=isChat()?threadScroll[chatChannel()]:0;}
+ function back(){
+  if(!state.history.length)return;
+  if(nativeHistory){window.history.back();return;}
+  beforeNavigate();state.route=state.history.pop();state.msg='';draw();main.scrollTop=isChat()?threadScroll[chatChannel()]:0;
+ }
+ window.addEventListener('popstate',e=>{
+  if(!e.state?.couplePreview)return;
+  if(!bgPanel.hidden)dismissWallpaper(false);
+  beforeNavigate();
+  const h=e.state;Object.assign(state,{route:h.route,history:h.stack,selectedMem:h.selected,editing:h.editing,module:h.module,msg:''});
+  draw();main.scrollTop=isChat()?threadScroll[chatChannel()]:0;
+ });
+ syncLocation(true);
+ function closeNote(){const n=root.querySelector('.rv-demo-panel');if(n)n.remove();}
+ function demoNote(){
+  closeNote();
+  const panel=document.createElement('section');panel.className='rv-demo-panel';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','关于本机演示');
+  panel.innerHTML='<strong>关于本机演示</strong><p>聊天使用示例回复。你在这里填写的内容和背景图片仅保存在当前浏览器，无需登录。</p>'+button('closeDemo','知道了','dp-primary');
+  device.append(panel);panel.querySelector('button').focus();
+ }
+ function homeMessage(who,text){
+  const cls=who==='我'?'mine':who==='伴侣'?'partner':'dp',mark=cls==='dp'?glyph('dp'):cls==='mine'?'☾':'✦';
+  return '<div class="rv-chat is-'+cls+'"><span aria-hidden="true" class="rv-avatar '+cls+'">'+mark+'</span><div class="rv-msg"><span class="rv-author">'+escape(who)+'</span><div class="rv-bubble">'+escape(text)+'</div></div></div>';
+ }
+ function homeTicket(){
+  return button('go:plan','<span class="rv-plan-art">'+art('thumb')+'</span><span class="rv-plan-body"><small>共同日程　↗</small><strong>周六看展</strong><span>'+escape(state.plan.time)+' · '+escape(state.plan.place)+'</span></span>','rv-plan','aria-label="查看共同日程：周六看展"');
+ }
+ function chatPage(){
+  const group=chatChannel()==='group';
+  const seed=group
+   ? homeMessage('伴侣','我看了展览海报，好想去。周六下午一起？')+homeMessage('我','好呀，下午见。')+homeMessage('伴侣','@DP 把我们刚才说的安排找出来吧。')+homeMessage('DP','在这里。点开就能看集合地点，也可以各自确认时间。')
+   : homeMessage('我','周末想和她出去走走，行程别太满。')+homeMessage('DP','那就留一个下午给美术馆吧。你们之前提过的展，在这份计划里。');
+  const messages=chats[chatChannel()].map(m=>homeMessage(m.who,m.text)+(m.card?homeTicket():'')).join('');
+  return '<div class="rv-thread"><div class="rv-privacy">'+glyph(group?'link':'lock')+'<span>'+(group?'双方可见':'仅自己可见')+'</span><i aria-hidden="true">·</i>'+button('demoNote','本机演示','rv-demo-link')+'</div><div class="rv-date">11 月 18 日</div>'+seed+homeTicket()+messages+'</div>';
+ }
+ function homeReply(t){
+  if(/周末|计划|展览|约会|集合|几点|看展/.test(t))return {text:'周六 '+state.plan.time+'，在'+state.plan.place+'碰头。想换时间或地点，可以点开这份计划修改。',card:true};
+  if(/记忆|回忆|旧书/.test(t))return {text:'共同记忆里有一段「旧书摊的午后」。在底部点「功能」，再进「共同记忆」，就能重温那天。'};
+  if(/你好|嗨|在吗|晚上好|早上好/.test(t))return {text:'我在。这里可以试着问我「周六几点集合」，看看聊天怎样接上你们的计划。'};
+  if(/心情|难过|委屈|情绪/.test(t))return {text:'可以先把你在意的那句话写下来。如果只想自己梳理，在「关系沟通」里有一份私人草稿。'};
+  return {text:'这句话已放进当前演示对话。这个预览使用固定回复，你可以问「周六几点集合」试试。'};
+ }
+ function sendHome(){
+  if(!isChat())return;
+  const mode=chatChannel(),t=chatInput.value.trim().slice(0,500);if(!t)return;
+  chats[mode].push({who:'我',text:t});
+  if(mode==='private'||/@dp(?=$|[\s，,。！？?!：:]|[\u3400-\u9fff])/i.test(t))chats[mode].push({who:'DP',...homeReply(t)});
+  drafts[mode]='';chatInput.value='';state.menuOpen=false;remember();draw();main.scrollTop=main.scrollHeight;chatInput.focus({preventScroll:true});
+ }
+ function renderMenu(){
+  menu.hidden=!(isChat()&&state.menuOpen);
+  more.setAttribute('aria-expanded',String(!menu.hidden));
+  if(!menu.hidden)menu.innerHTML=(chatChannel()==='private'?button('go:guide',glyph('dp')+'让 DP 了解我'):button('mentionDP',glyph('dp')+'提及 DP'))+button('go:profile',glyph('notebook')+'个人档案')+button('go:directory',glyph('grid')+'全部功能')+button('background',glyph('images')+'换背景');
+ }
+ function page(route){
+  if(route==='daily'){
+   const latest=state.memories.map((m,i)=>({m,i})).sort((a,b)=>b.m.date.localeCompare(a.m.date,'zh-CN',{numeric:true})||b.i-a.i).slice(0,2);
+   const agenda=state.finished?'':section('下一次约会')+homeTicket();
+   return ['日常','',agenda+section('一起安排')+'<div class="dp-list">'+row('go:calendar','共同日程','',icon('calendar-days',''))+row('go:wish','共同心愿','',icon('sparkles',''))+'</div>'+section('最近的共同记忆')+'<div class="dp-list">'+latest.map(({m,i})=>row('mem:'+i,m.name,m.date,icon('book-heart',''))).join('')+row('go:memory','查看全部回忆','')+'</div>'];
+  }
+  if(route==='mine'){
+   return ['我的','','<div class="rv-personal-heading">'+identity('我')+'<div><h2>我的空间</h2><p>个人档案与设置</p></div></div><div class="dp-list">'+row('go:profile','个人档案','查看、修改偏好和可见范围',icon('notebook',''))+row('go:guide','让 DP 了解我','私下聊聊我的习惯和想法',icon('dp',''))+'</div>'+section('外观')+'<div class="dp-list">'+row('background','换背景','从相册选择自己的图片',icon('images',''))+'</div>'];
+  }
+  if(route==='directory'){
+   return [ '功能','',ticket()+section('全部功能','12 项')+'<div class="dp-grid">'+Object.entries(modules).map(([id,[name,ic,fb]])=>button('go:'+id,icon(ic,fb)+'<span>'+name+'</span>','dp-tile')).join('')+'</div>'+section('档案')+'<div class="dp-list">'+row('go:profile','个人档案','看看 DP 从聊天里记住了什么',identity('我'))+'</div>'];
+  }
+  if(isChat(route))return [route==='home'?'我们仨':'我和 DP','',chatPage()];
+  if(route==='wish')return ['心愿','双方可见',heading('我们想一起做的事','心愿')+'<div class="dp-list">'+row('go:wishdetail','找一个下午，一起看展',state.wish?'已关联到约会':'想去 · 我们仨的聊天',icon('sparkles','✧'))+row('go:sea','一起看海边日出','想去 · 还没有定日期',icon('sunrise','☼'))+'</div>'+help('wish')];
+  if(route==='wishdetail'||route==='sea'){let sea=route==='sea';return ['心愿详情','双方可见',heading('想和你一起',sea?'一起看海边日出':'找一个下午，一起看展')+(sea?'<div class="dp-memory-cover"><b>海边 · 日出</b></div>':'<div class="dp-hero">'+art('wide')+'</div>')+meta(sea?[['状态','还没有定日期'],['地点','海边']]:[['来自','我们仨的聊天'],['状态',state.wish?'已关联周六看展':'想去']])+(sea?primary('dp:wish','和 DP 商量周末'):primary('linkWish',state.wish?'查看约会计划':'关联「周六看展」'))];}
+  if(route==='date'||route==='calendar')return [modules[route][0],'双方可见',heading(route==='calendar'?'11 月 · 本周':'下次一起去',route==='calendar'?'共同日程':'我们的约会')+ticket()+section('待商量')+'<div class="dp-list">'+row('go:sea','一起看海边日出','还没有定日期')+'</div>'+help('plan')];
+  if(route==='plan')return ['约会计划','双方可见',heading('周六 · 11 月 21 日','周六看展')+'<div class="dp-hero">'+art('wide')+'</div>'+meta([['见面时间',state.plan.time],['碰头地点',state.plan.place],['我',state.plan.me?'已确认':'待确认'],['伴侣',state.plan.partner?'已确认':'待确认']])+'<div class="dp-actions">'+button('go:editplan','修改安排','dp-secondary')+button('confirmPlan',state.plan.me?'我已确认':'确认我的时间','dp-primary')+'</div>'+(state.plan.me?button(state.finished?'openmemory':'go:finish',state.finished?'查看这次的共同记忆 ›':'约会结束了，记下一笔 ›','dp-soft'):'')+help('plan','和 DP 商量这次约会')];
+  if(route==='editplan')return ['修改安排','双方可见',heading('周六看展','改一下碰头安排')+'<label class="dp-field">见面时间<input name="time" type="time" value="'+escape(state.plan.time)+'"></label>'+field('碰头地点','place',state.plan.place)+warning()+primary('savePlan','保存并请双方重新确认')];
+  if(route==='finish')return ['记录约会','双方可见',heading('周六看展','留下一个细节')+field('这段文字将进入共同记忆','memo','',true)+warning()+primary('saveMemory','存入共同记忆')];
+  if(route==='memory'||route==='album')return [modules[route][0],'双方可见',heading('我们一起经历的',route==='album'?'情侣相册':'共同记忆')+'<div class="dp-memory-cover"><b>11 月 · 沿江散步</b></div>'+section(route==='album'?'相册':'11 月')+'<div class="dp-list">'+(route==='album'?row('go:albumdetail','沿江散步','一张风景封面'):state.memories.map((m,i)=>row('mem:'+i,m.name,m.date)).join(''))+'</div>'+help(route)];
+  if(route==='albumdetail')return ['沿江散步','双方可见',heading('11 月 15 日 · 情侣相册','沿江散步')+'<div class="dp-memory-cover"><b>江边的傍晚</b></div>'+section('图注')+'<div class="dp-sheet">'+escape(state.albumCaption||'走到这里的时候，天刚刚变成橘色。')+'</div>'+field('修改图注','caption',state.albumCaption||'走到这里的时候，天刚刚变成橘色。')+warning()+primary('saveCaption','保存图注')];
+  if(route==='memorydetail'){const m=state.memories[state.selectedMem]||state.memories[0];const cover=m.name==='周六看展'?'<div class="dp-hero">'+art('wide')+'</div>':m.name==='旧书摊的午后'?bookCover:'<div class="dp-memory-cover"><b>沿江散步</b></div>';return ['共同记忆','双方可见',heading(m.date,m.name)+cover+section('当时记下的')+'<div class="dp-sheet">'+escape(m.note)+'</div>'+(m.name==='旧书摊的午后'?button('go:game','用这段回忆玩一道题 ›','dp-soft'):'')+help('memory')];}
+  if(route==='profile'){
+   const mine=state.profileTab==='me',preview=mine&&state.preview,items=mine?(preview?state.profiles.filter(p=>p.scope==='双方可见'):state.profiles):partnerProfile;
+   return ['个人档案',mine?'个人空间':'对方分享','<div class="paper-head">'+identity(mine?'我':'伴侣')+heading(mine?'来自我和 DP 的聊天':'来自伴侣的分享',mine?'我的档案':'伴侣的档案')+'</div>'+tabs([['p:me','我的档案'],['p:partner','伴侣的档案']],'p:'+state.profileTab)+section(preview?'伴侣能看到的条目':mine?'我的偏好':'分享给我的偏好',mine&&!preview?'逐条管理':'')+'<div class="dp-list">'+(items.length?items.map((p,i)=>mine&&!preview?row('edit:'+i,p.title,p.scope):'<div class="dp-row"><span class="dp-row-body"><strong>'+escape(p.title)+'</strong><small class="dp-caption">'+p.scope+'</small></span></div>').join(''):'<div class="dp-row">暂时没有公开条目</div>')+'</div>'+(mine?button('togglePreview',preview?'返回完整档案':'预览伴侣能看到的内容','dp-soft')+(!preview?primary('go:guide','让 DP 了解我'):''):'')];
+  }
+  if(route==='editprofile'){const p=state.profiles[state.editing];if(!p)return ['档案条目','',heading('个人档案','这条记录已移除')+primary('go:profile','查看个人档案')];return ['编辑档案条目','',heading('从私聊里记下的','这条记录由你决定')+field('档案内容','pref',p.title,true)+'<label class="dp-field">谁可以看<select name="scope">'+['仅自己可见','双方可见'].map(s=>'<option '+(s===p.scope?'selected':'')+'>'+s+'</option>').join('')+'</select></label>'+warning()+primary('savePref','保存修改')+button('delPref','删除这条记录','dp-soft')];}
+  if(route==='guide')return ['让 DP 了解我','仅自己可见',section('从一件小事聊起')+inbox('DP','想起你最近有点累的那一天。对方做过什么，让你觉得被照顾到了？')+(state.guideText?inbox('我',state.guideText)+inbox('DP','这句话你想留在自己的档案里吗？保存前可以改一改。')+field('要记住的原话','draft',state.guideText,true)+warning()+primary('storeGuide','仅存进我的档案'):compose('sendGuide','说说那天的事')+warning())];
+  if(route==='universe'){
+   let spot={dock:['水岸步道','那次沿江散步，变成了岛边的一小段路。','mem:0'],station:['玻璃观察站','这间小屋收藏着你们放进来的共同经历。','go:memory'],books:['旧书摊','那天淘到了一本旧画册。','mem:1']}[state.world];
+   return ['小宇宙','双方可见',heading('我们的小宇宙','水边观察站')+'<div class="dp-scene">'+art('world')+button('world:station','✧','dp-pin','aria-label="探索玻璃观察站"')+button('world:dock','≈','dp-pin second','aria-label="探索水岸步道"')+button('world:books','▥','dp-pin third','aria-label="探索旧书摊"')+'</div><div class="dp-float-note">'+section(spot[0],'可探索')+'<p>'+spot[1]+'</p></div>'+primary(spot[2],'查看共同记忆')+help('universe')];
+  }
+  if(route==='game'){const options=['旧画册','电影海报','手绘明信片'];const choices=(action)=>'<div class="dp-list">'+options.map(o=>row(action+':'+o,o,'')).join('')+'</div>';return ['互动游戏','各自作答',heading('取材于共同记忆 · 旧书摊的午后','那天最想带走哪一样？')+bookCover+(state.guess?section('等待伴侣作答')+meta([['我的选择',state.game],['我猜伴侣会选',state.guess],['伴侣答案','尚未揭晓']])+button('changeGame','修改我的答案','dp-soft'):state.game?section('猜一猜，伴侣会选什么？')+choices('guess'):section('先选自己的答案')+choices('game'))+help('game')];}
+  if(route==='talk')return ['关系沟通','仅自己可见',heading('先私下理一理','我想让你知道')+inbox('DP','哪一句话让你最在意？你可以先写下来，慢慢找自己想表达的意思。')+field('我的私人草稿','talk',state.talk,true)+warning()+primary('saveTalk',state.talk?'保存修改':'保存我的草稿')+help('talk','和 DP 接着聊')];
+  if(models[route]){const m=models[route],hidden=route==='gift'||route==='surprise';return [modules[route][0],hidden?'仅自己可见':'双方可见',heading(m.eyebrow,m.title)+meta(m.details)+primary('toggle:'+route,state.saved[route]?m.done+' · 撤销':m.act)+help(route)];}
+  if(route==='assistant'){const id=state.module,log=state.logs[id]||[],action={plan:'go:editplan',wish:'go:wishdetail',memory:'go:memory',universe:'go:universe',profile:'go:guide',album:'go:albumdetail',game:'go:game',talk:'go:talk'}[id]||'go:'+id;return ['和 DP 聊聊','示例对话',heading('当前话题',assistantLabels[id]||'这条记录')+inbox('DP',id==='plan'?'目前约在周六 '+state.plan.time+'、'+state.plan.place+'。你想改几点，还是换个碰头的地方？':contextOpening[id]||basicReply[id]||'你最想先聊什么？')+log.map(x=>inbox(x[0],x[1])).join('')+compose('sendDP','继续这个话题')+warning()+button(action,{plan:'打开约会编辑',wish:'打开心愿',profile:'进入了解模式'}[id]||'打开相关页面','dp-soft')];}
+  return ['功能','',''];
+ }
+ function respond(id,text){
+  if(id==='plan')return /时间|点|改|晚|早/.test(text)?'可以打开下方的约会编辑，写下你希望碰头的时间；改动后两个人可重新确认。':'先把新的碰头地点写进计划，方便对方看到后确认。';
+  if(id==='talk')return '你想让对方先听懂哪一部分？可以先留在自己的草稿里。';
+  if(id==='wish')return '可以先留在心愿里。两个人时间合适时，再关联到约会。';
+  if(id==='game')return '这一题会在你们都提交后揭晓。更想一起去做的事，也能记成心愿。';
+  if(id==='memory')return '你愿意把哪一个片段留在两个人都能看到的记忆里？';
+  if(id==='universe')return '水岸步道上有那次散步的回忆。可以点地图上的水纹查看。';
+  return basicReply[id]||'可以先记下这个想法，再回到对应页面修改。';
+ }
+ function act(action){
+  if(action==='background'){state.menuOpen=false;renderMenu();editWallpaper();return;}
+  if(!bgPanel.hidden){if(action==='back'){dismissWallpaper(false);return;}dismissWallpaper(false);}
+  bgStatus.textContent='';
+  const sep=action.indexOf(':'),kind=sep<0?action:action.slice(0,sep),arg=sep<0?'':action.slice(sep+1);
+  state.msg='';
+  if(kind==='tab'){if(arg!==state.route)navigate(arg);return;}
+  if(kind==='go')return navigate(arg);
+  if(kind==='back')return back();
+  if(kind==='chatTools'){state.menuOpen=!state.menuOpen;renderMenu();return;}
+  if(kind==='demoNote'){demoNote();return;}
+  if(kind==='closeDemo'){closeNote();root.querySelector('[data-act="demoNote"]')?.focus();return;}
+  if(kind==='sendHome'){sendHome();return;}
+  if(kind==='mentionDP'){state.menuOpen=false;renderMenu();if(!chatInput.value.toLowerCase().includes('@dp'))chatInput.value=('@DP '+chatInput.value).slice(0,500);drafts[chatChannel()]=chatInput.value;send.disabled=!chatInput.value.trim();remember();chatInput.focus();return;}
+  if(kind==='dp'){state.module=arg;return navigate('assistant');}
+  if(kind==='mem'){state.selectedMem=Number(arg);return navigate('memorydetail');}
+  if(kind==='edit'){state.editing=Number(arg);return navigate('editprofile');}
+  if(kind==='p'){state.profileTab=arg;state.preview=false;}
+  if(kind==='togglePreview')state.preview=!state.preview;
+  if(kind==='world')state.world=arg;
+  if(kind==='game')state.game=arg;
+  if(kind==='guess')state.guess=arg;
+  if(kind==='changeGame'){state.game='';state.guess='';}
+  if(kind==='toggle')state.saved[arg]=!state.saved[arg];
+  if(kind==='linkWish'){state.wish=true;remember();return navigate('plan');}
+  if(kind==='confirmPlan')state.plan.me=true;
+  if(kind==='savePlan'){
+   const time=valueOf('time'),place=valueOf('place');
+   if(!time||!place)state.msg='写下碰头时间和地点后即可保存。';
+   else {if(time!==state.plan.time||place!==state.plan.place){state.plan={time,place,me:false,partner:false};}remember();return back();}
+  }
+  if(kind==='saveMemory'){
+   const memo=valueOf('memo');if(!memo)state.msg='写下一句想保留的细节吧。';
+   else {if(!state.finished)state.memories.push({name:'周六看展',note:memo,date:'11 月 21 日'});state.finished=true;state.selectedMem=state.memories.length-1;state.route='memorydetail';syncLocation(true);main.scrollTop=0;}
+  }
+  if(kind==='openmemory'){state.selectedMem=state.memories.length-1;return navigate('memorydetail');}
+  if(kind==='saveCaption'){const c=valueOf('caption');if(!c)state.msg='请写一句图注。';else{state.albumCaption=c;remember();return back();}}
+  if(kind==='savePref'){
+   const p=valueOf('pref'),s=valueOf('scope');if(!p)state.msg='请写下想保留的内容。';
+   else {state.profiles[state.editing]={title:p,scope:s};remember();return back();}
+  }
+  if(kind==='delPref'){state.profiles.splice(state.editing,1);remember();return back();}
+  if(kind==='sendGuide'){
+   const t=valueOf('message');if(!t)state.msg='可以先写一句自己的感受。';else state.guideText=t;
+  }
+  if(kind==='storeGuide'){
+   const t=valueOf('draft');if(!t)state.msg='请写下你想保存的一句话。';
+   else {state.profiles.push({title:t,scope:'仅自己可见'});state.guideText='';state.profileTab='me';state.preview=false;remember();if(state.history[state.history.length-1]==='profile')return back();return navigate('profile');}
+  }
+  if(kind==='saveTalk'){const t=valueOf('talk');if(!t)state.msg='写一点内容后即可保存。';else {state.talk=t;state.msg='私人草稿已保存。';}}
+  if(kind==='sendDP'){
+   const t=valueOf('message');if(!t)state.msg='先输入一句话。';
+   else{const id=state.module;const log=state.logs[id]||(state.logs[id]=[]);log.push(['我',t],['DP',respond(id,t)]);}
+  }
+  remember();draw();
+ }
+ function draw(){
+  const [title,side,body]=page(state.route),home=state.route==='home';device.dataset.route=state.route;main.innerHTML=body;
+  topRight.textContent=side;
+  const tabPage=primaryRoutes.some(([id])=>id===state.route);
+  dock.hidden=!tabPage;
+  for(const control of dock.querySelectorAll('[data-tab]')){
+   if(control.dataset.tab===state.route)control.setAttribute('aria-current','page');else control.removeAttribute('aria-current');
+  }
+  const previous=state.history[state.history.length-1];
+  backButton.hidden=home||(tabPage&&(!previous||primaryRoutes.some(([id])=>id===previous)));
+  backButton.innerHTML=glyph('chevron');backButton.setAttribute('aria-label',state.route==='private'?'返回我们仨':'返回上一页');
+  top.textContent=title;privateEntry.hidden=!home;
+  editor.hidden=!isChat();renderMenu();
+  if(isChat()){
+   const privateChat=state.route==='private';
+   chatInput.value=drafts[chatChannel()]||'';
+   chatInput.placeholder=privateChat?'私下和 DP 说…':'发到我们仨…';
+   chatInput.setAttribute('aria-label',privateChat?'私下发给 DP':'发到我们仨');
+   editor.setAttribute('aria-label',privateChat?'私聊输入栏':'群聊输入栏');
+   send.setAttribute('aria-label',privateChat?'发给 DP':'发送到我们仨');
+   send.disabled=!chatInput.value.trim();
+  }
+  main.querySelectorAll('[data-art]').forEach(paint);
+ }
+ function paint(canvas){
+  const kind=canvas.dataset.art;
+  const world=kind==='world';
+  const width=kind==='thumb'?400:760, height=kind==='thumb'?400:world?440:444;
+  canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d');if(!ctx)return;
+  const paper='#ffffff',field='#f7f5fc',pale='#ede8f9',middle='#c6b6e7',fold='#a38ace',violet='#6939c7',ink='#51465d';
+  function shape(path,color){ctx.fillStyle=color;ctx.fill(new Path2D(path));}
+  function stroke(path,color,weight=2){ctx.lineWidth=weight;ctx.strokeStyle=color;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke(new Path2D(path));}
+  function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h);}
+  function ginkgo(x,y,scale,angle,color){
+   ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.scale(scale,scale);
+   shape('M0 0 C-20 -20 -45 -22 -62 -52 Q-63 -59 -54 -57 Q-48 -69 -39 -63 Q-33 -75 -24 -67 Q-18 -78 -11 -70 L-2 -57 L2 -72 Q9 -81 17 -73 Q26 -77 32 -68 Q41 -73 47 -61 Q55 -65 59 -54 C52 -28 20 -19 0 0Z',color);
+   stroke('M0 0 Q-1 -24 -15 -49 M0 0 Q-15 -26 -40 -45 M0 0 Q12 -28 34 -49',paper,1.2);
+   ctx.restore();
+  }
+  rect(0,0,width,height,paper);
+  if(!world){
+   if(kind==='thumb'){
+    rect(0,0,width,height,field);
+    shape('M230 341V162a93 93 0 0 1 186 0v179h-24V162a69 69 0 0 0-138 0v179z',pale);
+    stroke('M48 382 Q108 225 222 118 M116 244 Q127 199 126 157',ink,3);
+    ginkgo(132,220,1.13,-.59,middle);ginkgo(206,139,1.5,.54,violet);
+   }else{
+    shape('M420 337V148a112 112 0 0 1 224 0v189h-24V148a88 88 0 0 0-176 0v189z',pale);
+    stroke('M0 328H173 M316 328H718',middle,1.3);
+    stroke('M80 384Q146 258 301 121 M154 261Q146 210 139 176',ink,2.5);
+    ginkgo(145,207,.89,-.69,middle);ginkgo(230,167,1.33,.16,violet);ginkgo(300,123,.73,.75,fold);
+   }
+   return;
+  }
+  // The bank, jetty and buildings sit under their interactive location pins.
+  shape('M0 178Q121 158 236 173T485 157T760 151v289H0z',field);
+  shape('M0 321Q139 273 257 302Q411 350 508 286T760 272v168H0z',pale);
+  stroke('M6 351Q132 311 234 333 M385 364Q465 346 509 315 M633 307Q697 284 743 287',middle,1.8);
+  shape('M44 321l136 -49 8 13 -137 49z',middle);
+  stroke('M50 329l134 -48',ink,1.5);
+  rect(260,216,146,67,paper);rect(264,211,4,69,ink);rect(398,211,4,69,ink);
+  shape('M250 218l15 -28h134l16 28z',violet);
+  for(let i=0;i<4;i++){const x=278+29*i;stroke('M'+x+' 192l-5 23',paper,2);}
+  rect(255,251,156,5,ink);rect(264,262,135,18,middle);
+  [16,21,11,19,23,13,17,10,19,22].forEach((h,i)=>rect(274+i*11,249-h,7,h,[fold,pale,ink,middle][i%4]));
+  rect(505,127,128,97,paper);shape('M491 129Q568 21 647 129Z',middle);
+  shape('M535 220v-53a36 36 0 0 1 72 0v53z',fold);
+  stroke('M570 135v85 M538 178h66',paper,2.5);
+  rect(498,222,143,4,ink);rect(488,230,161,3,middle);
+  [[94,218,1],[173,192,.69],[692,206,.85]].forEach(([x,y,s],i)=>{
+   stroke('M'+x+' '+y+'v-'+(36*s),ink,2.5);ginkgo(x,y-30*s,s,0,i===1?middle:fold);
+  });
+ }
+ fileInput.addEventListener('change',()=>previewUpload(fileInput.files[0]));
+ const viewport=window.visualViewport;
+ let restingHeight=viewport?.height||window.innerHeight,keyboardSeen=false;
+ function beginTyping(){device.dataset.typing='yes';}
+ function endTyping(){delete device.dataset.typing;keyboardSeen=false;}
+ chatInput.addEventListener('focus',beginTyping);
+ chatInput.addEventListener('pointerdown',beginTyping);
+ editor.addEventListener('focusout',e=>{if(!editor.contains(e.relatedTarget))endTyping();});
+ viewport?.addEventListener('resize',()=>{
+  if(!device.dataset.typing){restingHeight=viewport.height;return;}
+  if(restingHeight-viewport.height>100)keyboardSeen=true;
+  else if(keyboardSeen&&restingHeight-viewport.height<50){endTyping();restingHeight=viewport.height;}
+ });
+ chatInput.addEventListener('input',()=>{if(!isChat())return;drafts[chatChannel()]=chatInput.value;send.disabled=!chatInput.value.trim();remember();});
+ chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();sendHome();}});
+ bgPanel.addEventListener('click',e=>{const a=e.target.closest('[data-bg-action]')?.dataset.bgAction;if(a==='apply'||a==='cancel')dismissWallpaper(a==='apply');if(a==='reset'){pickVersion++;fileInput.value='';draftPhoto='';renderPhoto('');note('默认纸雕背景预览，点「应用背景」保存。');}});
+ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!bgPanel.hidden){dismissWallpaper(false);return;}if(root.querySelector('.rv-demo-panel')){closeNote();return;}if(state.menuOpen){state.menuOpen=false;renderMenu();return;}if(state.route!=='home')back();});
+ root.addEventListener('click',e=>{const button=e.target.closest('[data-act]');if(button&&root.contains(button))act(button.dataset.act);});
+ root.addEventListener('submit',e=>{const form=e.target.closest('[data-submit]');if(form){e.preventDefault();act(form.dataset.submit);}});
+ draw();
+})();
+</script>
+</body></html>
+
