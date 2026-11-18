@@ -93,10 +93,175 @@ def event(c, a, key, version, action, fields=(), prior=None):
         )
 
 
-def content_edit(c, a, before, title, body):
+_MEET = r"(?:集合|见面|会合|碰面)"
+_CHANGE = r"(?:改[为到成]|调整[为到]|推迟[到至]|提前[到至]|移[到至]|定[在为]|安排在)"
+_PERIOD = r"(?:凌晨|早上|早晨|上午|中午|下午|傍晚|晚上)"
+_NUM = r"(?:\d{1,2}|[零〇一二两三四五六七八九十]{1,3})"
+_TIME = rf"(?:{_PERIOD}\s*)?(?:{_NUM}\s*(?:[:：]\s*\d{{2}}|[点时](?:整|半|{_NUM}分?)?))|{_PERIOD}|待定|待确认|待补充"
+_CLOCK_TEXT = rf"(?P<time>{_TIME})"
+_PLAN = r"(?:(?:把|将)?(?:我们|双方)?(?:已?确认好的?|原定的?|共同的?)?(?:本次|这次|周末|当天)?(?:计划|约会|行程|日程))"
+_MARKED = re.compile(
+    rf"(?:(?:{_PLAN}(?:的)?)|把|将)?{_MEET}(?:时间)?\s*(?:[:：]|{_CHANGE}|是|为|在)?\s*{_CLOCK_TEXT}(?:\s*{_MEET})?"
+)
+_RESCHEDULE = re.compile(rf"{_PLAN}\s*{_CHANGE}\s*{_CLOCK_TEXT}(?:\s*{_MEET})?")
+_TIME_FIRST = re.compile(
+    rf"(?:周末|当天)?\s*{_CLOCK_TEXT}\s*(?:在[^，,；;。\n]{{1,20}})?{_MEET}"
+)
+_TIME_ONLY = re.compile(rf"(?:{_CHANGE}\s*)?{_CLOCK_TEXT}")
+_OUTING_START = re.compile(
+    rf"(?:周末|当天|这次)?\s*{_CHANGE}\s*{_CLOCK_TEXT}\s*一起(?:出发(?:去.{{1,35}})?|去[^，,；;。\n]{{1,35}})"
+)
+_SPLIT = re.compile(r"[\n。；;，,]+")
+
+
+def _numeral(word):
+    if word.isdecimal():
+        return int(word)
+    digits = "零一二三四五六七八九"
+    word = word.replace("两", "二").replace("〇", "零")
+    if word.count("十") == 1:
+        tens, ones = word.split("十")
+        if len(tens) <= 1 and len(ones) <= 1:
+            return (digits.index(tens) if tens else 1) * 10 + (
+                digits.index(ones) if ones else 0
+            )
+    if len(word) == 1 and word in digits:
+        return digits.index(word)
+    if len(word) == 2 and word[0] == "零" and word[1] in digits:
+        return digits.index(word[1])
+    return -1
+
+
+def _parse_clock(value):
+    # The empty clock is a supported state on existing handsets ("时间待补充").
+    if re.fullmatch(rf"{_PERIOD}|待定|待确认|待补充", value):
+        return ""
+    match = re.fullmatch(
+        rf"(?P<period>{_PERIOD})?\s*(?P<hour>{_NUM})\s*(?:[:：]\s*(?P<min>\d{{2}})|[点时](?P<chinese>整|半|{_NUM}分?)?)",
+        value,
+    )
+    if not match:
+        raise Failure(422, "meeting_clock", "请使用 24 小时制或把集合时间标为待定。")
+    period, hour, minute, chinese = match.groups()
+    h = _numeral(hour)
+    m = 0
+    if minute:
+        m = int(minute)
+    elif chinese == "半":
+        m = 30
+    elif chinese and chinese != "整":
+        m = _numeral(chinese.rstrip("分"))
+    if not (0 <= h < 24 and 0 <= m < 60):
+        raise Failure(
+            422,
+            "meeting_clock",
+            "请在草稿中使用明确的 24 小时制集合时间，例如「集合时间：16:00」。",
+        )
+    if not period:
+        if h < 13 and not (minute is not None and len(hour) == 2 and hour.isdecimal()):
+            return ""
+    elif period in ("下午", "晚上", "傍晚") and 1 <= h < 12:
+        h += 12
+    elif period == "中午" and 1 <= h <= 2:
+        h += 12
+    elif not (
+        period in ("早上", "早晨", "上午", "凌晨")
+        and h < 12
+        or period == "中午"
+        and h in (11, 12)
+        or period == "下午"
+        and h == 12
+    ):
+        raise Failure(
+            422, "meeting_clock", "请把集合时间写成 24 小时制，避免混淆上午和下午。"
+        )
+    return f"{h:02}:{m:02}"
+
+
+def _confirmed_clock(old_body, body, request):
+    def clauses(text):
+        return [part.strip() for part in _SPLIT.split(text) if part.strip()]
+
+    def explicit(part):
+        return (
+            _MARKED.fullmatch(part)
+            or _RESCHEDULE.fullmatch(part)
+            or _TIME_FIRST.fullmatch(part)
+        )
+
+    def schedule_request(part):
+        part = re.sub(r"^(?:@(?:DP|AI)\s+|请|帮我|帮我们)+", "", part, flags=re.I)
+        return explicit(part) or _TIME_ONLY.fullmatch(part) and re.match(_CHANGE, part)
+
+    prior = set(clauses(old_body))
+    # A bare time in an edited draft can only mean the meeting time when the original request did.
+    allow_short = any(schedule_request(x) for x in clauses(request))
+    clock_mentions = []
+    changed = False
+    for part in clauses(body):
+        match = explicit(part) or (allow_short and _TIME_ONLY.fullmatch(part))
+        if (
+            not match
+            and allow_short
+            and not re.search(r"看电影|开场|散场|演出|吃饭|用餐|排队|结束", part)
+        ):
+            match = _OUTING_START.fullmatch(part)
+        if match:
+            clock_mentions.append(match["time"])
+            changed |= part not in prior
+        elif part not in prior and re.match(
+            rf"^(?:把|将)?{_MEET}时间\s*(?:[:：]|{_CHANGE})", part
+        ):
+            raise Failure(
+                422,
+                "meeting_clock",
+                "请单独写一行「集合时间：16:00」或「集合时间：待定」，再确认草稿。",
+            )
+    if not changed:
+        return None
+    times = {_parse_clock(value) for value in clock_mentions}
+    if len(times) != 1:
+        raise Failure(
+            422,
+            "meeting_clock",
+            "草稿含多个集合时间。请保留一个时间，或写「集合时间：待定」。",
+        )
+    return times.pop()
+
+
+def content_edit(c, a, before, title, body, *, confirmed_request=None):
     fields = [k for k, v in (("title", title), ("body", body)) if v != before[k]]
+    prior = None
+    if (
+        confirmed_request is not None
+        and "body" in fields
+        and before["module"] in ("date", "calendar")
+    ):
+        key = before["id"]
+        plan = c.execute(
+            "SELECT stage,clock FROM life_plans WHERE plan=?", (key,)
+        ).fetchone()
+        if not plan or plan["stage"] == "planned":
+            clock = _confirmed_clock(before["body"], body, confirmed_request)
+            old_clock = plan["clock"] if plan else ""
+            if clock is not None and clock != old_clock:
+                c.execute(
+                    """INSERT INTO life_plans(plan,stage,clock) VALUES(?,'planned',?)
+                ON CONFLICT(plan) DO UPDATE SET clock=excluded.clock""",
+                    (key, clock),
+                )
+                fields.append("clock")
+                prior = {"clock": old_clock} if old_clock and clock else None
     if fields:
-        event(c, a, before["id"], before["version"] + 1, "edit", fields)
+        event(
+            c,
+            a,
+            before["id"],
+            before["version"] + 1,
+            "meeting" if "clock" in fields else "edit",
+            fields,
+            prior,
+        )
 
 
 def _photo(value):

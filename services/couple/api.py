@@ -212,6 +212,7 @@ def create_app(settings=None, upstream=None):
             "ok": True,
             "schema": SCHEMA_VERSION,
             "version": "0.4.0+4",
+            "service_revision": 2,
             "mode": request.app.state.settings.mode,
         }
 

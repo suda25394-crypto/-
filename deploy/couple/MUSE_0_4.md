@@ -1,6 +1,6 @@
 # Muse 交接 · Android 私人测试版 0.4.0+4
 
-请部署 [Android 0.4 测试发布](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4) 中的配套服务 ZIP，核对同页 SHA256SUMS。APK、产品服务和网关来自同一发布标记。现有公网地址在 11 月 18 日的检查返回产品 schema 1。手机 0.4 需要 schema 3，且模型调用须另有成功回执。
+请部署 [Android 0.4 测试发布](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4) 中的 **couple-service-r2-*.zip**，按同页 **SHA256SUMS-r2.txt** 核对 APK 和 ZIP。手机仍用已验证的 25a08a1 安装包，服务修订 2 修复计划确认后集合时间的同步；服务文件名中带实际源码提交。现有公网地址在 11 月 18 日的检查返回产品 schema 1。手机 0.4 需要 schema 3，且模型调用须另有成功回执。
 
 ## 准备与回退点
 
@@ -13,7 +13,7 @@
 1. 展开 ZIP，确认含 `services/couple`、`prompts/dp-relationship.zh-CN.md`、`deploy/couple` 和 `deploy/gateway`。用 ZIP 名中的源码提交标记两个镜像。在原 Gateway Compose 项目覆盖实际网关服务的构建目录，保留原网络、别名、端口和预算卷。内部检查原 WebUI 仍能列出 `deepseek-flash`。[网关命令、计费用量及回滚](../gateway/MUSE.md)
 2. 产品服务只通过已有网络访问 Open WebUI 和 Gateway。配置 `COUPLE_USER_A_ID`、`COUPLE_USER_B_ID`、`COUPLE_CHANNEL_ID`、`OPENWEBUI_URL`、`GATEWAY_URL`、`COUPLE_SESSION_KEY_FILE`、`DEMO_GATEWAY_TOKEN_FILE`。示例 compose 的内部别名为 `webui` 和 `deepseek-gateway`，请与原别名核对。两边的 `DEMO_DAILY_REQUESTS` 和 `DEMO_MAX_OUTPUT_TOKENS` 沿用现行低值，上限为北京时间每天 30 次、每次最多 1024 输出 token。先确认原配置的 `DEEPSEEK_ENABLED` 和 Key 已通过原有挂载提供给网关，不打印配置值。
 3. 在原产品 Compose 项目复用原卷、项目名和身份文件。让 **build context 指向解包的根目录**，Dockerfile 选 `deploy/couple/Dockerfile`，单 worker。进入已核对的运维目录，带上平时相同的 `-p`、`-f` 和 `--env-file` 参数，依次运行 `docker compose config --quiet`、`docker compose build product`、`docker compose up -d --no-deps --no-build product`。请勿将解包出的相对卷或空 secrets 目录作为原环境配置。新进程事务升级 schema 1/2 到 3。
-4. 从内部检查 Gateway `/health` 应有 `ok=true`、`app_tools_revision=1`、`upstream_enabled=true`。在产品容器、ECS 回环和公网依次核对产品健康 JSON，应有 `ok=true, schema=3, version="0.4.0+4", mode="live"`。公网健康路径是既有 `/couple/v1/health`，根路径应仍是原生 Open WebUI。若任何一项不符，停止分发地址，按上节回退或修正。已有产品路径时直接复查原配置。
+4. 从内部检查 Gateway `/health` 应有 `ok=true`、`app_tools_revision=1`、`upstream_enabled=true`。在产品容器、ECS 回环和公网依次核对产品健康 JSON，应有 `ok=true, schema=3, version="0.4.0+4", service_revision=2, mode="live"`。公网健康路径是既有 `/couple/v1/health`，根路径应仍是原生 Open WebUI。若任何一项不符，停止分发地址，按上节回退或修正。已有产品路径时直接复查原配置。
 5. 对照旧版，新服务增加会话工具及附件 `/v1/ai/*`、了解模式与日更档案、共同复盘、集合与变更动态、心愿到回忆的关联、调用回执。健康和成功登录各自独立验收。部分内置多步检索受整轮预算限制，按网关说明执行。首轮只做下列两次模型请求。
 
 ## 两次真实调用
@@ -38,7 +38,7 @@
 
 ```text
 时间（含时区） / 发布源码提交 / APK 0.4.0+4：
-原 WebUI 根路径状态 / 产品公网健康 / schema / build：
+原 WebUI 根路径状态 / 产品公网健康 / schema / build / service_revision：
 Gateway 修订 / upstream_enabled / 当日剩余额度是否足两次：
 私聊：时间 / 请求模型 / 上游报告模型 / outcome / 输入 token / 输出 token：
 普通共同消息：是否零调用：

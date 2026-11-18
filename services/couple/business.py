@@ -403,7 +403,9 @@ class Records:
                         (patch["title"], patch["body"], a.pair, target["id"]),
                     )
                     from .daily_life import content_edit
-                    content_edit(c,a,target,patch["title"],patch["body"])
+                    source=c.execute("SELECT input FROM chats WHERE pair=? AND owner=? AND request_id=?",
+                                     (a.pair,row["owner"],row["source"])).fetchone()
+                    content_edit(c,a,target,patch["title"],patch["body"],confirmed_request=source["input"] if source else "")
                 else:
                     for i, item in enumerate(chosen):
                         c.execute(
