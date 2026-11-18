@@ -1,6 +1,6 @@
 # Android 开发与产品规划交接
 
-**本轮继续至 Android 0.4.0+4。** 规划端请以[本轮逐项验收](ANDROID_0_4_RECEIPT.md)为当前状态，用同一个 [PR #1](https://github.com/suda25394-crypto/-/pull/1)继续协调。0.3 的版本和测试结果在下文留作历史参照。
+**当前 Android 试用包为 0.4.1+5。** 白紫版延续 PR #1 的 R2 客户端，使用 Muse 已上线的产品服务。见[安装与验收回执](ANDROID_WHITE_PURPLE_RECEIPT.md)和[模拟器双账号记录](evidence/android-white-purple/README.md)。上版功能和服务端材料见[0.4.0+4 回执](ANDROID_0_4_RECEIPT.md)。
 
 ## 0.3 交接时的记录
 

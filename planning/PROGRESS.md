@@ -1,5 +1,15 @@
 # 进度事实账本｜情侣 AI 生态
 
+## 2026-11-19 · D-55 白紫版双人试用
+
+当前 Android 安装件为 **0.4.1+5**，配套服务仍是已部署的 R2 0.4.0+4。登录和会话恢复后打开「我们仨」，右上角通往独立私聊。双方通过日常动态进入同一计划。保留十二模块，联网、演示及待开放状态在[白紫版回执](ANDROID_WHITE_PURPLE_RECEIPT.md)中逐项列明。
+
+- **发布**　[APK 与 SHA-256](https://github.com/suda25394-crypto/-/releases/tag/android-white-purple-v0.4.1-test.5)，[源码 ff47348](https://github.com/suda25394-crypto/-/commit/ff47348aa578d4d9c1194bfe5e087c9279832768)。签名和包名延续上一版，versionCode 4 → 5。
+- **本机／模拟器**　Flutter 分析通过，39 项 Flutter 测试、63 项服务端／仓库回归通过。[双 Android 用户记录与合成截图](evidence/android-white-purple/README.md)。
+- **公网与持机验收**　11 月 19 日 00:03（北京）公开 HTTPS 健康检查通过，schema 3、revision 2、live。开发使用合成账号与模型。两次真实 DeepSeek（一次私聊、一次群 @DP）、移动网络和双真机验收留给持机人。
+
+## 历史账本
+
 **更新：2026-11-17（Funnel 公网入口已开通）**。本文件以可检查的文件/用户明确决策为依据。不把设计方案写成已完成程序。
 
 ## 2026-11-18 · Android 0.4.0+4 私人测试
