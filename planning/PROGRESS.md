@@ -245,3 +245,10 @@ V0.1 是一个已归档、可以本地打开的 HTML 演示：称呼/回忆/偏�
 - **已核对本机产物**：Android 工作区已有 Flutter 源码、十二个模块入口、Android 模拟器及热重载截图、debug APK。上一节记载的是授权当时的状态。本次核对时主要 Android 交付文件仍未提交；证据位置为该工作区的 `apps/android/`、`planning/evidence/flutter/android-workbench/` 及 `planning/evidence/flutter/print-edition/home.png`。尚无证据表明最新界面已打入该 APK 或已在两部真机验收。
 - **当前功能边界**：Android 使用内存演示数据、合成身份和规则导演；云端已有 Open WebUI、网关、Funnel 与 A/B 账号的既往验收记录。真实 DeepSeek、情侣客户端账号接入、业务持久化与跨设备闭环仍待交付。
 - **D-41 新施工顺序**：Codex 接续现有 Android 工程完成[私人 Demo 功能交付任务](ANDROID_FUNCTIONAL_DEMO.md)，用户与 GPT 并行选视觉；用户确认整屏稿后再启动视觉改版。
+
+## 2026-11-18｜Android 功能测试版 0.2.0+2
+
+- 接续 main 任务书 `30d9693` 与既有 Flutter 未提交源码，功能交付源码 `f98d99d154b3`，保留原页面与十二个入口。已实现 Open WebUI 账号及固定配对、私聊与原生频道、服务端模型适配、授权记忆、问卷档案、持久化模块与确认同步。
+- 已实际打包并安装到 Android 13 模拟器：14 项 Flutter 用例、17 项服务/数据用例通过。隔离的真实 Open WebUI 0.13.3 和 Gateway 进程已验证，模型提供端使用合成回包。模拟器 A 修改并确认时间后，独立 B 会话读到同一记录，重开恢复成功。
+- 真实 DeepSeek 调用 0；现网部署、线上配额/资源及两部真实手机验收待 Muse 和两位账号主人。详见[功能回执与安装说明](ANDROID_FUNCTIONAL_RECEIPT.md)及[Muse 部署交接](../deploy/couple/MUSE.md)。
+

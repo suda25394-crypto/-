@@ -85,3 +85,7 @@
 ## 当前施工任务（2026-11-18，D-41）
 
 [Android 私人 Demo 功能交付](planning/ANDROID_FUNCTIONAL_DEMO.md)｜本机已有可运行客户端与调试 APK，当前由 Codex 接通真实模型、账号、云端业务与双人同步。视觉与用户并行讨论，用户选稿后另行实施。详见[最新进度](planning/PROGRESS.md)。
+
+### Android 私人测试版
+
+当前可安装版本为 0.2.0+2。可使用离线演示入口体验，也可在 Muse 配置产品服务后通过原有账号登录。代码、测试、APK 签名与真机验收状态见[功能交付回执](planning/ANDROID_FUNCTIONAL_RECEIPT.md)，部署材料见[Muse 交接](deploy/couple/MUSE.md)。
