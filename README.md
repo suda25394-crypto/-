@@ -1,5 +1,9 @@
 # 情侣 AI 生态｜AI 主导的情侣超级 App（产品名待定）
 
+Android 私人 Demo **0.4.0+4** 的[测试 APK 及校验值](https://github.com/suda25394-crypto/-/releases/tag/android-dp-v0.4.0-test.4-r2)、[按 D 编号的验收结果](planning/ANDROID_0_4_RECEIPT.md)和 [Muse 部署交接](deploy/couple/MUSE_0_4.md)在此开发分支。
+
+规划与 Android 开发进度见[双边交接页](planning/ANDROID_PLANNING_HANDOFF.md)，其中列出了已验收功能、可安装测试包、Muse 基线和后续任务。
+
 > **项目本体：AI 主导的情侣超级 App。**  
 > **“双生宇宙”只是 V0.1 小宇宙演示原型的临时名字，不是整体产品已经确定的名称或全部方向。**  
 > 仓库：`suda25394-crypto/-`｜私有项目资料中心｜最后校正：2026-11-17
@@ -85,3 +89,10 @@
 ## 当前施工任务（2026-11-18，D-41）
 
 [Android 私人 Demo 功能交付](planning/ANDROID_FUNCTIONAL_DEMO.md)｜本机已有可运行客户端与调试 APK，当前由 Codex 接通真实模型、账号、云端业务与双人同步。视觉与用户并行讨论，用户选稿后另行实施。详见[最新进度](planning/PROGRESS.md)。
+
+### Android 私人测试版
+
+Muse 交接分支的安装版本为 0.2.0+2。可使用离线演示入口体验，也可在 Muse 配置产品服务后通过原有账号登录。代码、测试、APK 签名与真机验收状态见[功能交付回执](planning/ANDROID_FUNCTIONAL_RECEIPT.md)，部署材料见[Muse 交接](deploy/couple/MUSE.md)。
+
+
+本分支 Android 测试版为 **0.3.0+3**。模块详情支持私人或共同续聊、编辑并确认原记录。另提供活动意愿、情境委托、实际反馈和共同回忆小游戏。新版服务可在本机独立运行。[安装、体验路径与双账号验收](planning/ANDROID_DP_D42_D43_RECEIPT.md)

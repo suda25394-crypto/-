@@ -1,0 +1,27 @@
+name: couple_app
+description: 情侣 AI Android 本地开发预览
+publish_to: none
+version: 0.4.0+4
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: 11.2.0
+  http: 1.6.0
+  material_ui: ^1.11.1
+  url_launcher: 6.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/paired-glass.webp
+    - assets/observatory.webp
+    - assets/covers/
