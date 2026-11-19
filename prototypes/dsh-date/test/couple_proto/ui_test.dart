@@ -105,6 +105,27 @@ class _UiSession extends CoupleController {
   }
 }
 
+class _LongDiscussion extends _UiSession {
+  final byScope = <String, DelayProposal?>{};
+
+  @override
+  Future<void> setScope(String value) async {
+    byScope[scope] = pending;
+    scope = value;
+    pending = byScope[value];
+    messages = List.generate(
+      120,
+      (i) => {
+        'id': '$scope-message-$i',
+        'role': 'assistant',
+        'owner': userId,
+        'text': '第 $i 条讨论。一起确认集合时间、地点和双方出发前的安排。',
+      },
+    );
+    notifyListeners();
+  }
+}
+
 Future<void> _open(WidgetTester tester, _UiSession session) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(390, 844);
@@ -172,6 +193,63 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('我的私人想法'), findsOneWidget);
       expect(find.text('双方授权的共同对话'), findsNothing);
+    },
+  );
+  testWidgets(
+    'a proposal stays reachable above long, scope-specific history and scrolls on a short large-text screen',
+    (tester) async {
+      final session = _LongDiscussion();
+      addTearDown(session.dispose);
+      await _open(tester, session);
+
+      await tester.tap(find.widgetWithText(ActionChip, '把约会推迟半小时'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('dp-send')));
+      await tester.pumpAndSettle();
+      final confirm = find.byKey(const Key('confirm-delay'));
+      final history = tester
+          .widget<ListView>(find.byKey(const Key('discussion-history')))
+          .controller!;
+      final dock = find.byKey(const Key('proposal-dock'));
+      expect(confirm.hitTestable(), findsOneWidget);
+      final dockY = tester.getTopLeft(dock).dy;
+      expect(history.position.maxScrollExtent, greaterThan(2000));
+      history.jumpTo(0);
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(dock).dy, dockY);
+      expect(confirm.hitTestable(), findsOneWidget);
+
+      await tester.tap(find.text('两人共同聊'));
+      await tester.pumpAndSettle();
+      expect(dock, findsNothing);
+      history.jumpTo(0);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('私下问 DP'));
+      await tester.pumpAndSettle();
+      expect(confirm.hitTestable(), findsOneWidget);
+      expect(find.text('改为 2026-11-19 18:00'), findsOneWidget);
+
+      tester.view.physicalSize = const Size(620, 320);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final sheetScroll = tester
+          .state<ScrollableState>(
+            find.descendant(of: dock, matching: find.byType(Scrollable)).first,
+          )
+          .position;
+      final chatBefore = history.offset;
+      expect(sheetScroll.maxScrollExtent, greaterThan(0));
+      await tester.drag(dock, const Offset(0, -250));
+      await tester.pumpAndSettle();
+      expect(history.offset, chatBefore);
+      expect(confirm.hitTestable(), findsOneWidget);
+      await tester.tap(confirm);
+      await tester.pumpAndSettle();
+      expect(session.confirmations, 1);
+      expect(find.text('已确认时间 18:00'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }

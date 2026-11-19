@@ -306,7 +306,7 @@ class _MeetingDetailState extends State<_MeetingDetail> {
       final busy = c.busy || acted;
       return Scaffold(
         appBar: AppBar(
-          toolbarHeight: 72,
+          toolbarHeight: 42 + MediaQuery.textScalerOf(context).scale(30),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -334,157 +334,179 @@ class _MeetingDetailState extends State<_MeetingDetail> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 620),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView(
-                      controller: list,
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.calendar_today_outlined,
-                              size: 18,
-                              color: muted,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                [
-                                  m.day,
-                                  if (m.place.isNotEmpty) m.place,
-                                  if (m.address.isNotEmpty &&
-                                      m.address != m.place)
-                                    m.address,
-                                ].join(' · '),
-                                style: text.bodyMedium?.copyWith(color: muted),
+              child: LayoutBuilder(
+                builder: (context, bounds) => Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        key: const Key('discussion-history'),
+                        controller: list,
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.calendar_today_outlined,
+                                size: 18,
+                                color: muted,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(
-                              value: 'private',
-                              label: Text('私下问 DP'),
-                              icon: Icon(Icons.lock_outline_rounded),
-                            ),
-                            ButtonSegment(
-                              value: 'shared',
-                              label: Text('两人共同聊'),
-                              icon: Icon(Icons.people_outline),
-                            ),
-                          ],
-                          selected: {c.scope},
-                          showSelectedIcon: false,
-                          onSelectionChanged: busy
-                              ? null
-                              : (s) => changeScope(s.single),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          c.scope == 'private'
-                              ? '这里的对话只对你可见。确认改期后，对方会看到新时间。'
-                              : '你们两人都能查看这段对话和已确认的约会。',
-                          style: text.bodySmall?.copyWith(color: muted),
-                        ),
-                        const SizedBox(height: 16),
-                        for (final line in lines)
-                          _LineBubble(key: ValueKey(line.id), line: line),
-                        if (decisionNotice case final notice?)
-                          Semantics(
-                            liveRegion: true,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                notice,
-                                style: text.labelLarge?.copyWith(color: muted),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  [
+                                    m.day,
+                                    if (m.place.isNotEmpty) m.place,
+                                    if (m.address.isNotEmpty &&
+                                        m.address != m.place)
+                                      m.address,
+                                  ].join(' · '),
+                                  style: text.bodyMedium?.copyWith(
+                                    color: muted,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        if (proposal != null)
-                          _ProposalCard(
+                          const SizedBox(height: 18),
+                          SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(
+                                value: 'private',
+                                label: Text('私下问 DP'),
+                                icon: Icon(Icons.lock_outline_rounded),
+                              ),
+                              ButtonSegment(
+                                value: 'shared',
+                                label: Text('两人共同聊'),
+                                icon: Icon(Icons.people_outline),
+                              ),
+                            ],
+                            selected: {c.scope},
+                            showSelectedIcon: false,
+                            onSelectionChanged: busy
+                                ? null
+                                : (s) => changeScope(s.single),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            c.scope == 'private'
+                                ? '这里的对话只对你可见。确认改期后，对方会看到新时间。'
+                                : '你们两人都能查看这段对话和已确认的约会。',
+                            style: text.bodySmall?.copyWith(color: muted),
+                          ),
+                          const SizedBox(height: 16),
+                          for (final line in lines)
+                            _LineBubble(key: ValueKey(line.id), line: line),
+                          if (decisionNotice case final notice?)
+                            Semantics(
+                              liveRegion: true,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  notice,
+                                  style: text.labelLarge?.copyWith(
+                                    color: muted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (c.error case final error?) ...[
+                            const SizedBox(height: 10),
+                            ErrorMessage(error),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('核对最新状态'),
+                                onPressed: busy ? null : c.refresh,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (proposal != null)
+                      ConstrainedBox(
+                        // Reserve a reading area for the transcript even on short
+                        // screens. Only the action surface scrolls when its
+                        // contents grow beyond the available space.
+                        constraints: BoxConstraints(
+                          maxHeight: bounds.maxHeight * .62,
+                        ),
+                        child: SingleChildScrollView(
+                          key: const Key('proposal-dock'),
+                          primary: false,
+                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                          child: _ProposalCard(
                             proposal: proposal,
                             enabled: !busy,
                             onConfirm: () => decide(true),
                             onCancel: () => decide(false),
                           ),
-                        if (c.error case final error?) ...[
-                          const SizedBox(height: 10),
-                          ErrorMessage(error),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text('核对最新状态'),
-                              onPressed: busy ? null : c.refresh,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (proposal == null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (MediaQuery.viewInsetsOf(context).bottom == 0)
-                            ActionChip(
-                              onPressed: busy ? null : fillExample,
-                              label: const Text('把约会推迟半小时'),
-                              avatar: const Icon(
-                                Icons.schedule_outlined,
-                                size: 16,
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+                              ActionChip(
+                                onPressed: busy ? null : fillExample,
+                                label: const Text('把约会推迟半小时'),
+                                avatar: const Icon(
+                                  Icons.schedule_outlined,
+                                  size: 16,
+                                ),
                               ),
-                            ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  key: const Key('dp-input'),
-                                  controller: input,
-                                  minLines: 1,
-                                  maxLines: 3,
-                                  readOnly: busy,
-                                  decoration: const InputDecoration(
-                                    labelText: '告诉 DP 怎么改',
+                            const SizedBox(height: 4),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    key: const Key('dp-input'),
+                                    controller: input,
+                                    minLines: 1,
+                                    maxLines: 3,
+                                    readOnly: busy,
+                                    decoration: const InputDecoration(
+                                      labelText: '告诉 DP 怎么改',
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              ValueListenableBuilder<TextEditingValue>(
-                                valueListenable: input,
-                                builder: (_, value, _) => IconButton.filled(
-                                  key: const Key('dp-send'),
-                                  tooltip: '发送',
-                                  onPressed:
-                                      !busy && value.text.trim().isNotEmpty
-                                      ? send
-                                      : null,
-                                  icon: busy
-                                      ? const SizedBox.square(
-                                          dimension: 19,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                                const SizedBox(width: 8),
+                                ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: input,
+                                  builder: (_, value, _) => IconButton.filled(
+                                    key: const Key('dp-send'),
+                                    tooltip: '发送',
+                                    onPressed:
+                                        !busy && value.text.trim().isNotEmpty
+                                        ? send
+                                        : null,
+                                    icon: busy
+                                        ? const SizedBox.square(
+                                            dimension: 19,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.arrow_upward_rounded,
                                           ),
-                                        )
-                                      : const Icon(Icons.arrow_upward_rounded),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
