@@ -1,0 +1,28 @@
+name: dsh_app
+description: 双生宇宙约会改期原型，基于 dsh-Go v1.2.0 的独立 Android 客户端
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: ^3.14.0
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  http: ^1.6.0
+  flutter_secure_storage: ^11.2.0
+  dsh_client:
+    path: packages/dsh_client
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true
+  assets:
+    - LICENSE
+    - THIRD_PARTY_NOTICES.md
+  fonts:
+    - family: DshIcons
+      fonts:
+        - asset: assets/fonts/DshIcons.ttf
