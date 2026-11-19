@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dsh_app/couple_proto/couple_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 /// The service and both identities are loopback-only; the app still validates
 /// its public TLS origin, while this test transport talks to the local fixture.
@@ -100,6 +101,120 @@ void main() {
       throwsA(anything),
     );
   });
+  for (final failure in [
+    'before request',
+    'after commit',
+    'background',
+    'HTTP 408',
+  ]) {
+    test('confirmation transport drops: $failure', () async {
+      const meeting = {
+        'id': 'M',
+        'title': '散步',
+        'version': 1,
+        'day': '2026-11-19',
+        'clock': '17:30',
+        'place': '东门',
+        'address': '',
+      };
+      final vault = MemoryVault();
+      vault.value = jsonEncode({
+        'endpoint': 'https://pair-fixture.invalid',
+        'token': 'T',
+        'actions': {
+          'private:M': {
+            'request': 'dp-original',
+            'operation': 'one-unique-operation',
+            'meeting': meeting,
+            'text': '把约会推迟半小时',
+            'delay': true,
+            'ready': true,
+          },
+        },
+      });
+      final bodies = <String>[];
+      final applied = <String>{};
+      var freshConnections = 0;
+      var commits = 0;
+      late final CoupleController controller;
+      http.Response json(dynamic data, [int status = 200]) =>
+          http.Response.bytes(utf8.encode(jsonEncode(data)), status);
+      Future<http.Response> respond(
+        http.Request req, {
+        required bool fresh,
+      }) async {
+        switch (req.url.path) {
+          case '/v1/health':
+            return json({'ok': true, 'schema': 3});
+          case '/v1/state':
+            return json({
+              'paired': true,
+              'user': {'id': 'a', 'name': 'A'},
+              'modules': [
+                {...meeting, 'module': 'calendar', 'version': 1 + commits},
+              ],
+              'journeys': [
+                {
+                  'plan': 'M',
+                  'stage': 'planned',
+                  'day': meeting['day'],
+                  'clock': commits == 0 ? '17:30' : '18:00',
+                },
+              ],
+            });
+          case '/v1/modules/M/conversation':
+            expect(req.method, 'GET');
+            return json({'messages': []});
+          case '/v1/modules/M/life/meeting':
+            final id = (jsonDecode(req.body) as Map)['request_id'] as String;
+            bodies.add(req.body);
+            if (!fresh && failure == 'HTTP 408')
+              return json({
+                'error': {'code': 'timeout', 'message': '服务端超时'},
+              }, 408);
+            if (fresh || failure == 'after commit') {
+              if (applied.add(id)) commits++;
+            }
+            if (!fresh) {
+              if (failure == 'background') controller.setForeground(false);
+              throw http.ClientException('socket closed before headers');
+            }
+            return json({'module_id': 'M'});
+          default:
+            fail('unexpected route ${req.url.path}');
+        }
+      }
+
+      controller = CoupleController(
+        vault: vault,
+        client: MockClient((r) => respond(r, fresh: false)),
+        retryClient: () {
+          freshConnections++;
+          return MockClient((r) => respond(r, fresh: true));
+        },
+      );
+      addTearDown(controller.dispose);
+      await controller.restore();
+      await controller.selectMeeting('M');
+      expect(controller.proposal, isNotNull);
+      await controller.confirm();
+      if (failure == 'background' || failure == 'HTTP 408') {
+        expect(bodies.length, 1);
+        expect(freshConnections, 0);
+        expect(commits, 0);
+        expect(controller.proposal, isNotNull);
+      } else {
+        expect(controller.error, isNull);
+        expect(bodies.length, 2);
+        expect(bodies.first, bodies.last);
+        expect(freshConnections, 1);
+        expect(commits, 1);
+        expect(controller.proposal, isNull);
+        expect(controller.selected?.clock, '18:00');
+      }
+    });
+  }
+
   const port = int.fromEnvironment('COUPLE_PROTO_TEST_PORT');
   test(
     'R2 two accounts keep the private DP turn private, commit the same meeting once across midnight and notify the peer',
@@ -200,8 +315,8 @@ void main() {
       expect(a.proposal?.before, '2026-12-31 23:45');
       resumedHttp.loseMeetingReply = true;
       await a.confirm();
-      expect(a.proposal, isNotNull);
-      expect(a.error, isNotNull);
+      expect(a.proposal, isNull);
+      expect(a.error, isNull);
       final cutoff = DateTime.now().add(const Duration(seconds: 5));
       while (b.selected?.clock != '00:15' && DateTime.now().isBefore(cutoff)) {
         await Future<void>.delayed(const Duration(milliseconds: 60));

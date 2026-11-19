@@ -116,10 +116,17 @@ class DelayProposal {
 }
 
 class CoupleController extends ChangeNotifier {
-  CoupleController({http.Client? client, CoupleVault? vault})
-    : _http = client ?? http.Client(),
-      _vault = vault ?? const CoupleVault();
+  CoupleController({
+    http.Client? client,
+    CoupleVault? vault,
+    http.Client Function()? retryClient,
+  }) : _http = client ?? http.Client(),
+       _retryClient =
+           retryClient ?? (client == null ? http.Client.new : () => client),
+       _vault = vault ?? const CoupleVault();
   final http.Client _http;
+  final http.Client Function() _retryClient;
+  int _foregroundVisit = 0;
   final CoupleVault _vault;
   final Map<String, Json> _actions = {};
   Future<void> _vaultQueue = Future.value();
@@ -206,7 +213,12 @@ class CoupleController extends ChangeNotifier {
     _lastFull = DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  Future<Json> _request(String method, String path, [Json? data]) async {
+  Future<Json> _request(
+    String method,
+    String path, [
+    Json? data,
+    http.Client? transport,
+  ]) async {
     final epoch = _epoch;
     final r = http.Request(method, Uri.parse('$endpoint/v1/$path'))
       ..followRedirects = false;
@@ -217,10 +229,14 @@ class CoupleController extends ChangeNotifier {
       r.bodyBytes = utf8.encode(jsonEncode(data));
     }
     late http.Response answer;
+    var headersReceived = false;
     try {
-      answer = await _http
+      answer = await (transport ?? _http)
           .send(r)
-          .then(http.Response.fromStream)
+          .then((response) {
+            headersReceived = true;
+            return http.Response.fromStream(response);
+          })
           .timeout(
             Duration(
               seconds: method == 'POST' && path.endsWith('/conversation')
@@ -230,10 +246,20 @@ class CoupleController extends ChangeNotifier {
           );
     } on TimeoutException {
       throw const _ServiceError('连接超时。重试同一句会核对原请求，不会额外改期。');
+    } on TlsException {
+      throw const _ServiceError('HTTPS 连接验证失败，请检查服务地址。');
     } on http.ClientException {
-      throw const _ServiceError('连接失败，请检查网络和 HTTPS 地址。');
+      throw _ServiceError(
+        '连接失败，请检查网络和 HTTPS 地址。',
+        0,
+        headersReceived ? '' : 'transport_closed',
+      );
     } on IOException {
-      throw const _ServiceError('无法连接产品服务，请检查网络。');
+      throw _ServiceError(
+        '无法连接产品服务，请检查网络。',
+        0,
+        headersReceived ? '' : 'transport_closed',
+      );
     }
     if (_closed || epoch != _epoch) throw const _ServiceError('当前会话已切换。');
     final decoded = await _decode(answer);
@@ -537,19 +563,40 @@ class CoupleController extends ChangeNotifier {
     final card = proposal;
     if (card == null) return;
     final key = _key, action = _actions[key]!, m = card.meeting;
+    final path = 'modules/${Uri.encodeComponent(m.id)}/life/meeting';
+    final payload = {
+      'request_id': action['operation'],
+      'version': m.version,
+      'day': card.day,
+      'clock': card.clock,
+      'place': m.place,
+      'address': m.address,
+    };
+    final epoch = _epoch, view = _view, visit = _foregroundVisit;
     try {
-      final result = await _request(
-        'POST',
-        'modules/${Uri.encodeComponent(m.id)}/life/meeting',
-        {
-          'request_id': action['operation'],
-          'version': m.version,
-          'day': card.day,
-          'clock': card.clock,
-          'place': m.place,
-          'address': m.address,
-        },
-      );
+      late final Json result;
+      try {
+        result = await _request('POST', path, payload);
+      } on _ServiceError catch (error) {
+        if (error.status != 0 ||
+            error.code != 'transport_closed' ||
+            _closed ||
+            !_active ||
+            epoch != _epoch ||
+            view != _view ||
+            visit != _foregroundVisit ||
+            _key != key ||
+            _actions[key] != action)
+          rethrow;
+        // R2 deduplicates the entire payload by operation ID, even if the first
+        // write committed. Do not reuse the failed connection or retry DP turns.
+        final fresh = _retryClient();
+        try {
+          result = await _request('POST', path, payload, fresh);
+        } finally {
+          if (!identical(fresh, _http)) fresh.close();
+        }
+      }
       if (result['module_id'] != m.id)
         throw const _ServiceError('服务返回了不同的日程，请刷新核对。');
     } on _ServiceError catch (e) {
@@ -586,6 +633,7 @@ class CoupleController extends ChangeNotifier {
   void setForeground(bool value) {
     if (_active == value) return;
     _active = value;
+    _foregroundVisit++;
     _timer?.cancel();
     _timer = null;
     if (value && signedIn) unawaited(refresh());
