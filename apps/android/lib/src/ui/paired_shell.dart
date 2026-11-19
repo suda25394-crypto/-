@@ -5,6 +5,7 @@ import '../services/cloud_session.dart';
 import '../services/personal_wallpaper.dart';
 import 'cloud_chat.dart';
 import 'cloud_records.dart';
+import 'conversation_list.dart';
 import 'dp_game.dart';
 import 'dp_module_chat.dart';
 import 'modules.dart';
@@ -57,7 +58,7 @@ class _PairedShellState extends State<PairedShell> {
         children: [
           if (photo != null)
             Image.memory(photo, fit: BoxFit.cover, excludeFromSemantics: true),
-          if (photo == null) const ColoredBox(color: purplePaper),
+          if (photo == null) const ColoredBox(color: chatCanvas),
           CloudChat(
             session: session,
             scope: scope,
@@ -76,10 +77,22 @@ class _PairedShellState extends State<PairedShell> {
 
   void privateChat() => push(
     Scaffold(
-      appBar: AppBar(centerTitle: true, title: const Text('我和 DP')),
+      appBar: AppBar(
+        backgroundColor: chatTint,
+        centerTitle: true,
+        title: const Text('我和 DP'),
+      ),
       body: SafeArea(top: false, child: chat('private')),
     ),
   );
+
+  Future<void> openConversations() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final scope = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => ConversationList(session: session)),
+    );
+    if (mounted && scope == 'private') privateChat();
+  }
 
   void module(ModuleId id) {
     if (cloudModules.containsKey(id.name)) {
@@ -143,6 +156,15 @@ class _PairedShellState extends State<PairedShell> {
         appBar: AppBar(
           centerTitle: true,
           toolbarHeight: 54,
+          backgroundColor: tab == 0 ? chatTint : paper,
+          leading: tab == 0
+              ? IconButton(
+                  key: const Key('open-conversations'),
+                  tooltip: '会话列表',
+                  onPressed: openConversations,
+                  icon: const Icon(Icons.forum_outlined, color: chatAccent),
+                )
+              : null,
           title: Text(tab == 0 ? '我们仨' : tabs[tab].$1),
           actions: tab == 0
               ? [
@@ -154,14 +176,14 @@ class _PairedShellState extends State<PairedShell> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: TextButton.icon(
+                    child: IconButton(
                       key: const Key('open-private'),
+                      tooltip: '私聊',
                       onPressed: privateChat,
-                      icon: const Icon(Icons.lock_outline, size: 15),
-                      label: const Text('私聊'),
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        foregroundColor: pine,
+                      icon: const Icon(
+                        Icons.lock_outline_rounded,
+                        color: chatAccent,
+                        size: 21,
                       ),
                     ),
                   ),
@@ -251,17 +273,37 @@ class _PairedShellState extends State<PairedShell> {
                                     mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        index == tab ? item.$3 : item.$2,
-                                        size: 21,
-                                        color: index == tab ? pine : quiet,
+                                      DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: index == tab
+                                              ? chatTint
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 3,
+                                          ),
+                                          child: Icon(
+                                            index == tab ? item.$3 : item.$2,
+                                            size: 20,
+                                            color: index == tab
+                                                ? chatAccent
+                                                : quiet,
+                                          ),
+                                        ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         item.$1,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: index == tab ? pine : quiet,
+                                          color: index == tab
+                                              ? chatAccent
+                                              : quiet,
                                           fontWeight: index == tab
                                               ? FontWeight.w700
                                               : FontWeight.w500,

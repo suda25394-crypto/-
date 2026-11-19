@@ -11,12 +11,7 @@ import 'profile_mode.dart';
 part 'cloud_login.dart';
 part 'cloud_chat_message.dart';
 
-const _chatInk = Color(0xff242328);
-const _chatSecondary = Color(0xff64626b);
-const _chatLine = Color(0xffe9e8ec);
-const _chatSurface = Color(0xfff5f5f6);
-const _chatLilac = mist;
-const _chatViolet = pine;
+const _chatSurface = Color(0xfff7f3fd);
 
 class CloudFeedback extends StatelessWidget {
   const CloudFeedback({
@@ -458,8 +453,8 @@ class _CloudChatState extends State<_ScopedChat> {
             child: Material(
               color: Colors.white,
               shape: RoundedRectangleBorder(
-                side: const BorderSide(color: _chatLine),
-                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: chatBorder),
+                borderRadius: BorderRadius.circular(15),
               ),
               clipBehavior: Clip.antiAlias,
               child: ListTile(
@@ -467,7 +462,7 @@ class _CloudChatState extends State<_ScopedChat> {
                 onTap: () => chat.openPlan!(planId),
                 leading: const Icon(
                   Icons.calendar_today_outlined,
-                  color: _chatViolet,
+                  color: chatAccent,
                 ),
                 title: Text(
                   plan['title'] as String? ?? '共同计划',
@@ -492,10 +487,19 @@ class _CloudChatState extends State<_ScopedChat> {
     final controls = Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          child: _ChatLabel(
-            fixture && thread == null ? '$privacy · 合成联调' : privacy,
-            onPhoto: chat.hasBackground,
+          padding: const EdgeInsets.only(top: 9, bottom: 7),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: _chatSurface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              child: _ChatLabel(
+                fixture && thread == null ? '$privacy · 合成联调' : privacy,
+                onPhoto: false,
+              ),
+            ),
           ),
         ),
         if (!_shared && thread == null)
@@ -564,7 +568,7 @@ class _CloudChatState extends State<_ScopedChat> {
                             (planCard == null ? 0 : 1);
                       },
                       shrinkWrap: true,
-                      padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
                       itemCount:
                           (rows.isEmpty ? 1 : rows.length) +
                           (planCard == null ? 0 : 1),
@@ -575,11 +579,25 @@ class _CloudChatState extends State<_ScopedChat> {
                             padding: EdgeInsets.symmetric(
                               vertical: (box.maxHeight * .1).clamp(12.0, 60.0),
                             ),
-                            child: Center(
-                              child: _ChatLabel(
-                                _shared ? '给共同空间写下第一条消息。' : '你的私人对话从这里开始。',
-                                onPhoto: chat.hasBackground,
-                              ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 23,
+                                  backgroundColor: _chatSurface,
+                                  foregroundColor: chatAccent,
+                                  child: Icon(
+                                    _shared
+                                        ? Icons.forum_outlined
+                                        : Icons.lock_outline_rounded,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _ChatLabel(
+                                  _shared ? '给共同空间写下第一条消息。' : '你的私人对话从这里开始。',
+                                  onPhoto: chat.hasBackground,
+                                ),
+                              ],
                             ),
                           );
                         }
@@ -645,12 +663,12 @@ class _CloudChatState extends State<_ScopedChat> {
           DecoratedBox(
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: _chatLine)),
+              border: Border(top: BorderSide(color: chatBorder)),
             ),
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(7, 7, 7, 8),
+                padding: const EdgeInsets.fromLTRB(8, 7, 12, 8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -658,7 +676,8 @@ class _CloudChatState extends State<_ScopedChat> {
                       key: const Key('chat-more'),
                       tooltip: '更多聊天操作',
                       onPressed: _sending ? null : _showTools,
-                      icon: const Icon(Icons.add),
+                      color: chatAccent,
+                      icon: const Icon(Icons.add_circle_outline_rounded),
                     ),
                     Expanded(
                       child: TextField(
@@ -676,7 +695,7 @@ class _CloudChatState extends State<_ScopedChat> {
                         }) => null,
                         enabled: !_sending,
                         style: const TextStyle(
-                          color: _chatInk,
+                          color: ink,
                           fontSize: 15,
                           height: 1.45,
                         ),
@@ -686,7 +705,7 @@ class _CloudChatState extends State<_ScopedChat> {
                               : _shared
                               ? '发到我们仨，@DP 可提问…'
                               : '只发给 DP…',
-                          hintStyle: const TextStyle(color: _chatSecondary),
+                          hintStyle: const TextStyle(color: quiet),
                           filled: true,
                           fillColor: _chatSurface,
                           isDense: true,
@@ -695,21 +714,21 @@ class _CloudChatState extends State<_ScopedChat> {
                             vertical: 11,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(11),
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: chatBorder),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(11),
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: chatBorder),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(11),
-                            borderSide: const BorderSide(color: _chatViolet),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: chatAccent),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 5),
                     ValueListenableBuilder<TextEditingValue>(
                       valueListenable: _input,
                       builder: (_, value, _) {
@@ -730,8 +749,8 @@ class _CloudChatState extends State<_ScopedChat> {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: enabled ? _chatViolet : _chatSurface,
+                              borderRadius: BorderRadius.circular(13),
+                              color: enabled ? chatAccent : _chatSurface,
                             ),
                             child: Center(
                               child: _sending
@@ -743,13 +762,9 @@ class _CloudChatState extends State<_ScopedChat> {
                                       ),
                                     )
                                   : Icon(
-                                      retry
-                                          ? Icons.replay
-                                          : Icons.arrow_upward_rounded,
+                                      retry ? Icons.replay : Icons.send_rounded,
                                       size: 21,
-                                      color: enabled
-                                          ? Colors.white
-                                          : _chatSecondary,
+                                      color: enabled ? Colors.white : quiet,
                                     ),
                             ),
                           ),

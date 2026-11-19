@@ -80,6 +80,33 @@ Future<CloudSession> _restore(WidgetTester t, {double scale = 1}) async {
 
 void main() {
   testWidgets(
+    'conversation list opens both scopes without showing private previews',
+    (t) async {
+      await _restore(t, scale: 1.8);
+      final group = _key('cloud-shared-input');
+      await t.enterText(group, '保留在群聊的草稿');
+
+      await _tap(t, 'open-conversations');
+      expect(find.text('双方共享的记录'), findsOneWidget);
+      expect(find.text('私聊 · 仅自己可见'), findsOneWidget);
+      expect(find.text('账号 A 的私信'), findsNothing);
+      await _tap(t, 'conversation-shared');
+      expect(t.widget<TextField>(group).controller!.text, '保留在群聊的草稿');
+
+      await _tap(t, 'open-conversations');
+      await _tap(t, 'conversation-private');
+      expect(_key('cloud-private-input'), findsOneWidget);
+      expect(find.text('账号 A 的私信'), findsOneWidget);
+      expect(find.text('双方共享的记录'), findsNothing);
+      await t.binding.handlePopRoute();
+      await t.pumpAndSettle();
+      expect(t.widget<TextField>(group).controller!.text, '保留在群聊的草稿');
+      expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'restored group, keyboard, private route and Android back retain the shared composer',
     (t) async {
       await _restore(t);

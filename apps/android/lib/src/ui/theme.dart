@@ -10,6 +10,10 @@ const amber = Color(0xFF71308D);
 const amberWash = Color(0xFFFAF4FC);
 const purplePaper = Color(0xFFF7F0FA);
 const edge = Color(0xFFE9E8EC);
+const chatAccent = Color(0xFF6939C7);
+const chatCanvas = Color(0xFFEEE7FA);
+const chatTint = Color(0xFFE7DBFA);
+const chatBorder = Color(0xFFDDD0F0);
 
 const editionMeta = TextStyle(
   color: quiet,
