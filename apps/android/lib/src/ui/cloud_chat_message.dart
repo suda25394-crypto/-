@@ -14,11 +14,7 @@ class _ChatLabel extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: onPhoto ? 5 : 0, vertical: 1),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 12,
-          color: _chatSecondary,
-          height: 1.4,
-        ),
+        style: const TextStyle(fontSize: 12, color: quiet, height: 1.4),
       ),
     ),
   );
@@ -52,15 +48,15 @@ class _ChatMessage extends StatelessWidget {
         ? label
         : '$label · ${localTime.month}月${localTime.day}日 ${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
     final mark = Container(
-      width: 31,
-      height: 31,
+      width: 34,
+      height: 34,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(11),
         color: ai
-            ? _chatViolet
+            ? chatAccent
             : own
-            ? _chatLilac
+            ? chatTint
             : _chatSurface,
       ),
       child: ai
@@ -78,7 +74,7 @@ class _ChatMessage extends StatelessWidget {
           : Icon(
               own ? Icons.dark_mode_outlined : Icons.star_border_rounded,
               size: 19,
-              color: own ? _chatViolet : _chatInk,
+              color: own ? chatAccent : ink,
             ),
     );
     return Padding(
@@ -96,7 +92,7 @@ class _ChatMessage extends StatelessWidget {
                 button: true,
                 child: InkWell(
                   onTap: onActions,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(11),
                   child: mark,
                 ),
               ),
@@ -119,23 +115,27 @@ class _ChatMessage extends StatelessWidget {
                   const SizedBox(height: 3),
                   Container(
                     decoration: BoxDecoration(
-                      color: own && !ai ? _chatViolet : Colors.white,
-                      border: ai ? Border.all(color: _chatLine) : null,
+                      color: own
+                          ? chatAccent
+                          : ai
+                          ? _chatSurface
+                          : paper,
+                      border: own ? null : Border.all(color: chatBorder),
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(own ? 13 : 4),
-                        topRight: Radius.circular(own ? 4 : 13),
-                        bottomLeft: const Radius.circular(13),
-                        bottomRight: const Radius.circular(13),
+                        topLeft: Radius.circular(own ? 16 : 5),
+                        topRight: Radius.circular(own ? 5 : 16),
+                        bottomLeft: const Radius.circular(16),
+                        bottomRight: const Radius.circular(16),
                       ),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
+                      horizontal: 13,
+                      vertical: 10,
                     ),
                     child: SelectableText(
                       message['text'] as String? ?? '',
                       style: TextStyle(
-                        color: own && !ai ? Colors.white : _chatInk,
+                        color: own ? Colors.white : ink,
                         fontSize: 15,
                         height: 1.6,
                       ),

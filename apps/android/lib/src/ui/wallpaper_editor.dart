@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:material_ui/material_ui.dart';
 
 import '../services/personal_wallpaper.dart';
+import 'theme.dart';
 
 Future<void> openWallpaperEditor(
   BuildContext context,
@@ -95,8 +96,8 @@ class _WallpaperEditorState extends State<WallpaperEditor> {
                       borderRadius: BorderRadius.circular(14),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xffe5d2eb)),
+                          color: chatCanvas,
+                          border: Border.all(color: chatBorder),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Stack(
@@ -128,8 +129,11 @@ class _WallpaperEditorState extends State<WallpaperEditor> {
                               child: Align(
                                 alignment: Alignment.centerRight,
                                 child: Chip(
-                                  label: Text('聊天气泡预览'),
-                                  backgroundColor: Color(0xfff1e7f6),
+                                  label: Text(
+                                    '聊天气泡预览',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: chatAccent,
                                   side: BorderSide.none,
                                 ),
                               ),
